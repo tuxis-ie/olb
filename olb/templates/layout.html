@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <title>Olb Administrative interface</title>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+  <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+  <script>
+  $(function() {
+    $( "#tabs" ).tabs({
+      beforeLoad: function( event, ui ) {
+        ui.jqXHR.error(function() {
+          ui.panel.html(
+            "Couldn't load this tab. We'll try to fix this as soon as possible. " +
+            "If this wouldn't be a demo." );
+        });
+      }
+    });
+  });
+  </script>
+</head>
+<body>
+{% if not session.logged_in %}
+  {% block body %}{% endblock %}
+{% else %}
+  {% include "main.html" ignore missing %}
+{% endif %}
