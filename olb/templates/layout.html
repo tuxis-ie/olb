@@ -6,9 +6,11 @@
   <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
   <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
   <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+  <script src="{{ url_for('static', filename='jquery.validVal-4.3.3.js') }}"></script>
+  <script src="{{ url_for('static', filename='jquery.validVal-customValidations.js') }}"></script>
   <script>
   $(function() {
-    $( "#tabs" ).tabs({
+    $tabs = $("#tabs").tabs({
       beforeLoad: function( event, ui ) {
         ui.jqXHR.error(function() {
           ui.panel.html(

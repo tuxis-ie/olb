@@ -1,6 +1,29 @@
+<script type="text/javascript">
+    $("#uadd").validVal({});
+    $("#uadd input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#uadd" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/users",
+                data: form_data,
+                success: function( msg ) {
+                    var json = JSON.parse(msg);
+                    if (json.error != '') {
+                        alert(json.error);
+                        return false;
+                    }
+                    $( "#tabs" ).tabs( "load", 4 );
+                }
+            });
+        }
+    });
+</script>
+
 <div class="uadd">
   <h2>Add a user</h2>
-  <form method="POST" action="/users">
+  <form method="POST" action="/users" id="uadd">
   <table class="utable">
     <tr>
       <th>Username</th>
@@ -9,14 +32,14 @@
       <th>Password</th>
     </tr>
     <tr>
-      <td><input type="text" id="username" name="username" /></td>
-      <td><input type="text" id="realname" name="realname" /></td>
-      <td><input type="text" id="email" name="email" /></td>
-      <td><input type="password" name="password" /></td>
+      <td><input type="text" id="username" name="username" placeholder="Username" required="required"/></td>
+      <td><input type="text" id="realname" name="realname" placeholder="Real name" required="required" /></td>
+      <td><input type="email" id="email" name="email" placeholder="Email address" required="required"/></td>
+      <td><input type="password" name="password"  placeholder="Password" required="required"/></td>
     </tr>
     <tr>
       <td colspan="3">&nbsp;</td>
-      <td><input type="submit" name="uadd-submit" value="Add user" /></td>
+      <td><input type="submit" name="uadd-submit" id="uaddsubmit" value="Add user" /></td>
     </tr>
   </table>
   </form>

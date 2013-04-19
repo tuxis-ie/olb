@@ -2,6 +2,7 @@
 from __future__ import with_statement
 from contextlib import closing
 import sqlite3
+import json
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 import os.path
@@ -43,12 +44,13 @@ def add_user():
 
     if g.db.cursor().execute("INSERT INTO users (username, realname, password, email) \
         VALUES (?, ?, ?, ?)", [u, r, hashpw(p, gensalt()), e]):
+        g.db.commit()
         return True
 
     return False
 
 def get_users():
-    q = g.db.execute('SELECT * FROM users')
+    q = g.db.execute('SELECT * FROM users ORDER BY username')
     return q.fetchall()
 
 @app.before_request
@@ -88,7 +90,9 @@ def users():
     error = None
     if request.method == 'POST':
         if add_user() == False:
-            flash('There was an issue while adding the user')
+            ret = {}
+            ret['error'] = "Failed to add this user"
+            return json.dumps(ret)
 
     users = get_users()
     return render_template('users.html', users=users)
