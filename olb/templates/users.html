@@ -10,11 +10,35 @@
                 data: form_data,
                 success: function( msg ) {
                     var json = JSON.parse(msg);
-                    if (json.error != '') {
-                        alert(json.error);
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 4 );
+                        $.jGrowl(json.message);
                         return false;
                     }
-                    $( "#tabs" ).tabs( "load", 4 );
+                }
+            });
+        }
+    });
+    $(".udel" ).click(function( event ) {
+        uid = $(this).attr('id');
+        if ( uid ) {
+            $.ajax({
+                type: "POST",
+                url: "/users",
+                data: "action=delete&uid="+uid,
+                success: function( msg ) {
+                    var json = JSON.parse(msg);
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 4 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
                 }
             });
         }
@@ -39,7 +63,10 @@
     </tr>
     <tr>
       <td colspan="3">&nbsp;</td>
-      <td><input type="submit" name="uadd-submit" id="uaddsubmit" value="Add user" /></td>
+      <td>
+        <input type="hidden" name="action" value="add" />
+        <input type="submit" name="uaddsubmit" id="uaddsubmit" value="Add user" />
+      </td>
     </tr>
   </table>
   </form>
@@ -49,12 +76,14 @@
   <h2>Current users</h2>
   <table class="utable">
     <tr>
+      <td>&nbsp;</td>
       <th>Username</th>
       <th>Realname</th>
       <th>Emailaddress</th>
     </tr>
   {% for user in users %}
     <tr>
+      <td><a href="#" class="udel" id="{{ user.id }}">X</a></td>
       <td>{{ user.username }}</td>
       <td>{{ user.realname }}</td>
       <td>{{ user.email }}</td>

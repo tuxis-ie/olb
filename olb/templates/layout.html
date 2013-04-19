@@ -4,10 +4,13 @@
   <title>Olb Administrative interface</title>
   <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='jquery.jgrowl.min.css') }}" />
   <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
   <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
   <script src="{{ url_for('static', filename='jquery.validVal-4.3.3.js') }}"></script>
   <script src="{{ url_for('static', filename='jquery.validVal-customValidations.js') }}"></script>
+  <script src="{{ url_for('static', filename='jquery.jgrowl.min.js') }}"></script>
+
   <script>
   $(function() {
     $tabs = $("#tabs").tabs({

@@ -65,8 +65,20 @@ def add_user():
     except Exception:
         return False
 
-def get_userid(u):
-    q = g.db.execute('SELECT id FROM users WHERE username = ?', [ u ])
+def del_user():
+    uid = request.form['uid']
+    try:
+        g.db.execute("DELETE FROM users WHERE id = ?", [ uid ])
+        g.db.commit()
+        return True
+    except Exception:
+        return False
+
+def get_user(name=False, uid=False):
+    if name != False:
+        q = g.db.execute('SELECT * FROM users WHERE username = ?', [ name ])
+    if uid != False:
+        q = g.db.execute('SELECT * FROM users WHERE id = ?', [ uid ])
     return q.fetchone()
 
 def get_users():
@@ -176,7 +188,7 @@ def show_main():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    return render_template('show_main.html')
+    return render_template('layout.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -190,7 +202,7 @@ def login():
         if hashpw(p, r[0]) == r[0]:
             session['logged_in'] = True
             session['username']  = u
-            session['oid'] = get_userid(u)['id']
+            session['oid'] = get_user(name=u)['id']
             flash('You were logged in')
             return redirect(url_for('show_main'))
 
@@ -201,10 +213,28 @@ def login():
 def users():
     error = None
     if request.method == 'POST':
-        if add_user() == False:
-            ret = {}
-            ret['error'] = "Cannot add user (does it already exist?)"
-            return json.dumps(ret)
+        a = request.form.get('action')
+        if a == "add":
+            u = request.form.get('username')
+            if add_user() == False:
+                ret = {}
+                ret['error'] = "Could not add user %s (does it already exist?)" % ( u )
+                return json.dumps(ret)
+            else:
+                ret = {}
+                ret['message'] = "Added user %s!" % ( u )
+                return json.dumps(ret)
+        elif a == "delete":
+            uid = request.form.get('uid')
+            u = get_user(uid=uid)['username']
+            if del_user() == False:
+                ret = {}
+                ret['error'] = "Could not delete user %s" % ( u )
+                return json.dumps(ret)
+            else:
+                ret = {}
+                ret['message'] = "User %s deleted (and all it's settings)!" % ( u )
+                return json.dumps(ret)
 
     users = get_users()
     return render_template('users.html', users=users)
