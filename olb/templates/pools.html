@@ -1,0 +1,77 @@
+<script type="text/javascript">
+    $("#padd").validVal({});
+    $("#padd input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#padd" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/pools",
+                data: form_data,
+                success: function( msg ) {
+                    var json = JSON.parse(msg);
+                    if (json.error != '') {
+                        alert(json.error);
+                        return false;
+                    }
+                    $( "#tabs" ).tabs( "load", 2 );
+                }
+            });
+        }
+    });
+</script>
+
+<div class="pools">
+  <h2>Add a pool</h2>
+  <form method="POST" action="/pools" id="padd">
+  <table class="ptable">
+    <tr>
+      <th>Pool name</th>
+      <th>Pool members</th>
+    </tr>
+    <tr>
+      <td><input type="text" id="poolname" name="poolname" placeholder="Pool name" required="required"/></td>
+      <td>
+        <select name="members" required="required" multiple="multiple" size="6">
+        {% for node in nodes %}
+          <option value="{{ node.id }}">{{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</option>
+        {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="pooltype" required="required">
+        {% for pooltype in pooltypes %}
+          <option value="{{ pooltype.id }}">{{ pooltype.typename }}</option>
+        {% endfor %}
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+      <td><input type="submit" name="padd-submit" id="paddsubmit" value="Add pool" /></td>
+    </tr>
+  </table>
+  </form>
+</div>
+
+<div class="plist">
+  <h2>Current pools</h2>
+  <table class="ptable">
+    <tr>
+      <th>Pool</th>
+      <th>Nodes</td>
+      <th>Type</td>
+    </tr>
+  {% for pool in pools %}
+    <tr>
+      <td>{{ pool.poolname }}</td>
+      <td>
+        <ul>
+          {% for node in pool.nodes %}
+          <li>{{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td>{{ pool.typename }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>

@@ -1,0 +1,68 @@
+<script type="text/javascript">
+    $("#vadd").validVal({});
+    $("#vadd input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#vadd" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/vips",
+                data: form_data,
+                success: function( msg ) {
+                    var json = JSON.parse(msg);
+                    if (json.error != '') {
+                        alert(json.error);
+                        return false;
+                    }
+                    $( "#tabs" ).tabs( "load", 1 );
+                }
+            });
+        }
+    });
+</script>
+
+<div class="vips">
+  <h2>Add a vip</h2>
+  <form method="POST" action="/vips" id="vadd">
+  <table class="utable">
+    <tr>
+      <th>IP Address</th>
+      <th>Port</th>
+      <th>Pool</th>
+    </tr>
+    <tr>
+      <td><input type="text" id="ipaddress" name="ipaddress" placeholder="IP Address" required="required" /></td>
+      <td><input type="text" id="port" name="port" placeholder="Port" required="required" size="6" /></td>
+      <td>
+        <select name="pool" id="pool" required="required">
+        {% for pool in pools %}
+          <option value="{{ pool.id }}">{{ pool.poolname }}</option>
+        {% endfor %}
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+      <td><input type="submit" name="vadd-submit" id="vaddsubmit" value="Add vip" /></td>
+    </tr>
+  </table>
+  </form>
+</div>
+
+<div class="vlist">
+  <h2>Current vips</h2>
+  <table class="vtable">
+    <tr>
+      <th>IP Address</th>
+      <th>Port</th>
+      <th>Pool</th>
+    </tr>
+  {% for vip in vips %}
+    <tr>
+      <td>{{ vip.ip | ip_convert }}</td>
+      <td>{{ vip.port }}</td>
+      <td>{{ vip.poolname }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>

@@ -1,0 +1,62 @@
+<script type="text/javascript">
+    $("#nadd").validVal({});
+    $("#nadd input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#nadd" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/nodes",
+                data: form_data,
+                success: function( msg ) {
+                    var json = JSON.parse(msg);
+                    if (json.error != '') {
+                        alert(json.error);
+                        return false;
+                    }
+                    $( "#tabs" ).tabs( "load", 3 );
+                }
+            });
+        }
+    });
+</script>
+
+<div class="nodes">
+  <h2>Add a node</h2>
+  <form method="POST" action="/nodes" id="nadd">
+  <table class="utable">
+    <tr>
+      <th>Description</th>
+      <th>IP Address</th>
+      <th>Port</th>
+    </tr>
+    <tr>
+      <td><input type="text" id="description" name="description" placeholder="Description" required="required"/></td>
+      <td><input type="text" id="ipaddress" name="ipaddress" placeholder="IP Address" required="required" /></td>
+      <td><input type="text" id="port" name="port" placeholder="Port" required="required" size="6" /></td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+      <td><input type="submit" name="nadd-submit" id="naddsubmit" value="Add node" /></td>
+    </tr>
+  </table>
+  </form>
+</div>
+
+<div class="nlist">
+  <h2>Current nodes</h2>
+  <table class="ntable">
+    <tr>
+      <th>Description</th>
+      <th>IP Address</th>
+      <th>Port</th>
+    </tr>
+  {% for node in nodes %}
+    <tr>
+      <td>{{ node.description }}</td>
+      <td>{{ node.ip | ip_convert }}</td>
+      <td>{{ node.port }}</td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>
