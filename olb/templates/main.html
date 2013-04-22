@@ -4,7 +4,10 @@
     <li><a href="/vips">Virtual IPs</a></li>
     <li><a href="/pools">Pools</a></li>
     <li><a href="/nodes">Nodes</a></li>
+    {% if session.username == "admin" %}
     <li><a href="/users">Users</a></li>
+    <li><a href="/commit">Commit</a></li>
+    {% endif %}
   </ul>
   <a href="/logout" style="float: right; margin-top: -40px; margin-right: 20px;">Logout</a>
   <div id="tabs-1">

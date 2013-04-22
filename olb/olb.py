@@ -51,7 +51,17 @@ def ip_convert(ip):
         else:
             return str('4-')+str(int(ipaddr.IPv4Address(ip)))
 
+def check_if_admin():
+    try:
+        if session['username'] != 'admin':
+            return False
+        return True
+    except:
+        return False
+
 def add_user():
+    if check_if_admin() == False:
+        return False
     u = request.form['username']
     p = request.form['password']
     r = request.form['realname']
@@ -66,6 +76,8 @@ def add_user():
         return False
 
 def del_user():
+    if check_if_admin() == False:
+        return False
     uid = request.form['uid']
     try:
         g.db.execute("DELETE FROM users WHERE id = ?", [ uid ])
@@ -82,10 +94,14 @@ def get_user(name=False, uid=False):
     return q.fetchone()
 
 def get_users():
+    if check_if_admin() == False:
+        return False
     q = g.db.execute('SELECT * FROM users ORDER BY username')
     return q.fetchall()
 
 def add_node():
+    if check_if_admin() == False:
+        return False
     d = request.form['description']
     i = request.form['ipaddress']
     p = request.form['port']
@@ -118,10 +134,14 @@ def get_pool_types():
     return q.fetchall()
 
 def add_pool_node(nid, pid, owner):
+    if check_if_admin() == False:
+        return False
     q = g.db.execute('INSERT INTO poolnodes (node, pool, owner) \
         VALUES (?, ?, ?)', [ nid, pid, owner ])
 
 def add_pool():
+    if check_if_admin() == False:
+        return False
     i = request.form['poolname']
     p = request.form['pooltype']
     m = request.form.getlist('members[]')
@@ -161,6 +181,8 @@ def get_vips():
     return q.fetchall()
 
 def add_vip():
+    if check_if_admin() == False:
+        return False
     i = request.form['ipaddress']
     p = request.form['port']
     pl = request.form['pool']
@@ -211,6 +233,8 @@ def login():
 
 @app.route('/users', methods=['GET', 'POST'])
 def users():
+    if check_if_admin() == False:
+        return False
     error = None
     if request.method == 'POST':
         a = request.form.get('action')

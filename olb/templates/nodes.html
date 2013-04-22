@@ -21,6 +21,7 @@
     });
 </script>
 
+{% if session.username == "admin" %}
 <div class="nodes">
   <h2>Add a node</h2>
   <form method="POST" action="/nodes" id="nadd">
@@ -42,6 +43,7 @@
   </table>
   </form>
 </div>
+{% endif %}
 
 <div class="nlist">
   <h2>Current nodes</h2>

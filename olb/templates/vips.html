@@ -21,6 +21,7 @@
     });
 </script>
 
+{% if session.username == "admin" %}
 <div class="vips">
   <h2>Add a vip</h2>
   <form method="POST" action="/vips" id="vadd">
@@ -48,6 +49,7 @@
   </table>
   </form>
 </div>
+{% endif %}
 
 <div class="vlist">
   <h2>Current vips</h2>

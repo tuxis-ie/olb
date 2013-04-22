@@ -21,6 +21,7 @@
     });
 </script>
 
+{% if session.username == "admin" %}
 <div class="pools">
   <h2>Add a pool</h2>
   <form method="POST" action="/pools" id="padd">
@@ -51,6 +52,7 @@
   </table>
   </form>
 </div>
+{% endif %}
 
 <div class="plist">
   <h2>Current pools</h2>
