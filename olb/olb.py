@@ -52,12 +52,7 @@ def ip_convert(ip):
             return str('4-')+str(int(ipaddr.IPv4Address(ip)))
 
 def check_if_admin():
-    try:
-        if session['username'] != 'admin':
-            return False
-        return True
-    except:
-        return False
+    return session['username'] == 'admin'
 
 class pException(Exception):
     def __init__(self, mismatch):
