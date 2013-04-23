@@ -5,7 +5,7 @@ import sqlite3
 import json
 import re
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash
+     abort, render_template, flash, jsonify
 import os.path
 from bcrypt import hashpw, gensalt
 import ipaddr
@@ -283,24 +283,16 @@ def users():
         if a == "add":
             u = request.form.get('username')
             if add_user() == False:
-                ret = {}
-                ret['error'] = "Could not add user %s (does it already exist?)" % ( u )
-                return json.dumps(ret)
+                return jsonify(error="Could not add user %s (does it already exist?)" % ( u ))
             else:
-                ret = {}
-                ret['message'] = "Added user %s!" % ( u )
-                return json.dumps(ret)
+                return jsonify(message="Added user %s!" % ( u ))
         elif a == "delete":
             uid = request.form.get('uid')
             u = get_user(uid=uid)['username']
             if del_user() == False:
-                ret = {}
-                ret['error'] = "Could not delete user %s" % ( u )
-                return json.dumps(ret)
+                return jsonify(error="Could not delete user %s" % ( u ))
             else:
-                ret = {}
-                ret['message'] = "User %s deleted (and all it's settings)!" % ( u )
-                return json.dumps(ret)
+                return jsonify(message="User %s deleted (and all it's settings)!" % ( u ))
 
     users = get_users()
     return render_template('users.html', users=users)
@@ -310,9 +302,7 @@ def nodes():
     error = None
     if request.method == 'POST':
         if add_node() == False:
-            ret = {}
-            ret['error'] = "Cannot add node (does it already exist?)"
-            return json.dumps(ret)
+            return jsonify(error="Cannot add node (does it already exist?)")
 
     nodes = get_nodes()
     return render_template('nodes.html', nodes=nodes)
@@ -322,9 +312,7 @@ def pools():
     error = None
     if request.method == 'POST':
         if add_pool() == False:
-            ret = {}
-            ret['error'] = "Cannot add pool (does it already exist?)"
-            return json.dumps(ret)
+            return jsonify(error="Cannot add pool (does it already exist?)")
 
     dpools = get_pools()
     tpools = []
@@ -342,10 +330,17 @@ def pools():
 def vips():
     error = None
     if request.method == 'POST':
-        if add_vip() == False:
-            ret = {}
-            ret['error'] = "Cannot add vip (does it already exist?)"
-            return json.dumps(ret)
+        a = request.form.get('action')
+        if a == "add":
+            if add_vip() == False:
+                return jsonify(error="Cannot add vip (does it already exist?)")
+            else:
+                return jsonify(message="Vip added")
+        elif a == "delete":
+            if del_vip() == False:
+                return jsonify(error="Cannot delete vip!")
+            else:
+                return jsonify(message="Vip deleted")
 
     pools = get_pools()
     vips  = get_vips()
