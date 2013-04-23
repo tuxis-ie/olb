@@ -1,0 +1,40 @@
+<script type="text/javascript">
+    $("#commit").validVal({});
+    $("#commit input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#commit" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/commit",
+                dataType: "json",
+                data: form_data,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 5 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<div class="commit">
+  <h2>Commit current config</h2>
+  <form method="POST" action="/commit" id="commit">
+    <input type="text" name="cmsg" value="Commitbericht" />
+    <input type="submit" name="submit" value="Commit!" />
+  </form>
+</div>
+
+<div class="revert">
+{% for commit in history %}
+    {{ commit.timestamp }}<br />
+    {{ commit.message }}<br />
+{% endfor %}
+</div>

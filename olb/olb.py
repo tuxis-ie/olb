@@ -3,15 +3,18 @@ from __future__ import with_statement
 from contextlib import closing
 import sqlite3
 import json
+from datetime import datetime
 import re
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, jsonify
-import os.path
+import os
 from bcrypt import hashpw, gensalt
 import ipaddr
+import shutil
 
 # configuration
-DATABASE = '/tmp/olb.db'
+CONFIGREPO = "config"
+DATABASE = CONFIGREPO+'/olb.db'
 DEBUG = True
 SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M='
 USERNAME = 'admin'
@@ -35,6 +38,9 @@ def init_db():
             db.cursor().executescript(f.read())
         db.cursor().execute("INSERT INTO users (username, realname, password, email) VALUES (?, ?, ?, ?)", ['admin', 'Tuxis Internet Engineering', hashpw('admin', gensalt()), 'support@tuxis.nl'])
         db.commit()
+
+if os.path.isdir(app.config['CONFIGREPO']) == False:
+    os.mkdir(app.config['CONFIGREPO'])
 
 if os.path.isfile(app.config['DATABASE']) == False:
     init_db()
@@ -64,6 +70,29 @@ def adminonly(f):
             raise pException('Permission denied')
         return f(*args, **kwargs)
     return wrapper
+
+@adminonly
+def do_commit(tag, msg):
+    os.mkdir(os.path.join(app.config['CONFIGREPO'], tag))
+    l = file(os.path.join(app.config['CONFIGREPO'], tag, 'message'), 'w')
+    l.write(msg)
+    l.close()
+    shutil.copy2(app.config['DATABASE'], os.path.join(app.config['CONFIGREPO'], tag, 'olb.db'))
+
+@adminonly
+def get_commits():
+    ret = []
+    for root, dirs, files in os.walk(app.config['CONFIGREPO']):
+        if len(dirs) == 0:
+            ts = os.path.basename(root)
+            c = {}
+            c['timestamp'] = ts
+            if os.path.isfile(os.path.join(root, 'message')):
+                with open(os.path.join(root, 'message')) as cmsg:
+                    c['message'] = cmsg.read()
+                ret.append(c)
+
+    return ret
 
 @adminonly
 def add_user():
@@ -380,6 +409,25 @@ def vips():
     pools = get_pools()
     vips  = get_vips()
     return render_template('vips.html', pools=pools, vips=vips)
+
+@app.route('/commit', methods=['GET', 'POST'])
+def commit():
+    if request.method == 'POST':
+        cmsg = ""
+        try:
+            cmsg = request.form.get('cmsg')
+        except:
+            cmsg = "new commit"
+    
+        now = datetime.now()
+        tag = now.strftime("%Y%m%d%H%M%S")
+        do_commit(tag, cmsg)
+        return jsonify(message="Commited %s as %s" % (cmsg, tag))
+
+    commits = get_commits()
+
+    print commits
+    return render_template('commit.html', history=commits)
 
 @app.route('/logout')
 def logout():
