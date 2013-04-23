@@ -116,18 +116,22 @@ def add_node():
         print e
         return False
 
+def del_node():
+    if check_if_admin() == False:
+        return False
+    nodeid = request.form['nodeid']
+    try:
+        g.db.execute("DELETE FROM nodes WHERE id = ?", [nodeid])
+        g.db.commit()
+        return True
+    except Exception:
+        return False
+
 def get_nodes():
     o = session['oid']
     q = g.db.execute('SELECT * FROM nodes WHERE owner = ? ORDER BY ip', [ o ])
 
     return q.fetchall()
-
-def check_node_owner(nid, owner):
-    q = g.db.execute('SELECT * FROM nodes WHERE id = ? AND owner = ?', [ nid, owner ])
-    if q.fetchone() != None:
-        return True
-    else:
-        return False
 
 def get_pool_types():
     q = g.db.execute('SELECT * FROM pooltypes');
@@ -136,8 +140,25 @@ def get_pool_types():
 def add_pool_node(nid, pid, owner):
     if check_if_admin() == False:
         return False
-    q = g.db.execute('INSERT INTO poolnodes (node, pool, owner) \
-        VALUES (?, ?, ?)', [ nid, pid, owner ])
+    try:
+        g.db.execute('INSERT INTO poolnodes (node, pool, owner) \
+            VALUES (?, ?, ?)', [ nid, pid, owner ])
+        g.db.commit()
+        return True
+    except Exception:
+        return False
+
+def del_pool_node():
+    if check_if_admin() == False:
+        return False
+    pnodeid = request.form['pnodeid']
+    try:
+        g.db.execute("DELETE FROM poolnodes WHERE id = ?", [pnodeid])
+        g.db.commit()
+        return True
+    except Exception:
+        return False
+
 
 def add_pool():
     if check_if_admin() == False:
@@ -153,12 +174,22 @@ def add_pool():
             VALUES (?, ?, ?)", [i, oid, p])
         pid = q.lastrowid
         for n in m:
-            if check_node_owner(n, oid) == True:
-                add_pool_node(n, pid, oid)
+            add_pool_node(n, pid, oid)
         g.db.commit()
         return True
     except Exception, e:
         print e
+        return False
+ 
+def del_pool():
+    if check_if_admin() == False:
+        return False
+    poolid = request.form['poolid']
+    try:
+        g.db.execute("DELETE FROM pools WHERE id = ?", [poolid])
+        g.db.commit()
+        return True
+    except Exception:
         return False
 
 def get_pools():
@@ -195,6 +226,17 @@ def add_vip():
         return True
     except Exception, e:
         print e
+        return False
+
+def del_vip():
+    if check_if_admin() == False:
+        return False
+    vipid = request.form['vipid']
+    try:
+        g.db.execute("DELETE FROM vips WHERE id = ?", [vipid])
+        g.db.commit()
+        return True
+    except Exception:
         return False
 
 @app.before_request
