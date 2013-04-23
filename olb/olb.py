@@ -59,6 +59,10 @@ def check_if_admin():
     except:
         return False
 
+class pException(Exception):
+    def __init__(self, mismatch):
+        Exception.__init__(self, mismatch)
+    
 def add_user():
     if check_if_admin() == False:
         return False
@@ -72,8 +76,8 @@ def add_user():
             VALUES (?, ?, ?, ?)", [u, r, hashpw(p, gensalt()), e])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 def del_user():
     if check_if_admin() == False:
@@ -83,8 +87,8 @@ def del_user():
         g.db.execute("DELETE FROM users WHERE id = ?", [ uid ])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 def get_user(name=False, uid=False):
     if name != False:
@@ -113,8 +117,7 @@ def add_node():
         g.db.commit()
         return True
     except Exception, e:
-        print e
-        return False
+        raise pException(e)
 
 def del_node():
     if check_if_admin() == False:
@@ -124,8 +127,8 @@ def del_node():
         g.db.execute("DELETE FROM nodes WHERE id = ?", [nodeid])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 def get_nodes():
     o = session['oid']
@@ -145,8 +148,8 @@ def add_pool_node(nid, pid, owner):
             VALUES (?, ?, ?)', [ nid, pid, owner ])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 def del_pool_node():
     if check_if_admin() == False:
@@ -156,8 +159,8 @@ def del_pool_node():
         g.db.execute("DELETE FROM poolnodes WHERE id = ?", [pnodeid])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 
 def add_pool():
@@ -178,8 +181,7 @@ def add_pool():
         g.db.commit()
         return True
     except Exception, e:
-        print e
-        return False
+        raise pException(e)
  
 def del_pool():
     if check_if_admin() == False:
@@ -189,8 +191,8 @@ def del_pool():
         g.db.execute("DELETE FROM pools WHERE id = ?", [poolid])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 def get_pools():
     o = session['oid']
@@ -225,8 +227,7 @@ def add_vip():
         g.db.commit()
         return True
     except Exception, e:
-        print e
-        return False
+        raise pException(e)
 
 def del_vip():
     if check_if_admin() == False:
@@ -236,8 +237,8 @@ def del_vip():
         g.db.execute("DELETE FROM vips WHERE id = ?", [vipid])
         g.db.commit()
         return True
-    except Exception:
-        return False
+    except Exception, e:
+        raise pException(e)
 
 @app.before_request
 def before_request():
@@ -282,17 +283,19 @@ def users():
         a = request.form.get('action')
         if a == "add":
             u = request.form.get('username')
-            if add_user() == False:
-                return jsonify(error="Could not add user %s (does it already exist?)" % ( u ))
-            else:
+            try:
+                add_user()
                 return jsonify(message="Added user %s!" % ( u ))
+            except Exception, e:
+                return jsonify(error="Could not add user %s (%s)" % ( u, e ))
         elif a == "delete":
             uid = request.form.get('uid')
             u = get_user(uid=uid)['username']
-            if del_user() == False:
-                return jsonify(error="Could not delete user %s" % ( u ))
-            else:
+            try:
+                del_user()
                 return jsonify(message="User %s deleted (and all it's settings)!" % ( u ))
+            except Exception, e:
+                return jsonify(error="Could not delete user %s (%s)" % ( u, e ))
 
     users = get_users()
     return render_template('users.html', users=users)
@@ -301,8 +304,19 @@ def users():
 def nodes():
     error = None
     if request.method == 'POST':
-        if add_node() == False:
-            return jsonify(error="Cannot add node (does it already exist?)")
+        a = request.form.get('action')
+        if a == "add":
+            try:
+                add_node()
+                return jsonify(message="Node added")
+            except Exception, e:
+                return jsonify(error="Cannot add node (%s)" % (e))
+        elif a == "delete":
+            try:
+                del_node()
+                return jsonify(message="Node deleted")
+            except Exception, e:
+                return jsonify(error="Cannot delete node (%s)" % (e))
 
     nodes = get_nodes()
     return render_template('nodes.html', nodes=nodes)
@@ -311,8 +325,19 @@ def nodes():
 def pools():
     error = None
     if request.method == 'POST':
-        if add_pool() == False:
-            return jsonify(error="Cannot add pool (does it already exist?)")
+        a = request.form.get('action')
+        if a == "add":
+            try:
+                add_pool()
+                return jsonify(message="Pool added")
+            except Exception, e:
+                return jsonify(error="Cannot add pool (%s)" % (e))
+        elif a == "delete":
+            try:
+                del_pool()
+                return jsonify(message="Pool deleted")
+            except Exception, e:
+                return jsonify(error="Cannot delete pool (%s)" % e)
 
     dpools = get_pools()
     tpools = []
@@ -332,15 +357,17 @@ def vips():
     if request.method == 'POST':
         a = request.form.get('action')
         if a == "add":
-            if add_vip() == False:
-                return jsonify(error="Cannot add vip (does it already exist?)")
-            else:
+            try:
+                add_vip()
                 return jsonify(message="Vip added")
+            except Exception, e:
+                return jsonify(error="Cannot add vip (%s)" % (e))
         elif a == "delete":
-            if del_vip() == False:
-                return jsonify(error="Cannot delete vip!")
-            else:
+            try:
+                del_vip()
                 return jsonify(message="Vip deleted")
+            except Exception, e:
+                return jsonify(error="Cannot delete vip (%s)" % (e))
 
     pools = get_pools()
     vips  = get_vips()
