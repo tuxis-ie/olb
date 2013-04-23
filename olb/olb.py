@@ -59,8 +59,8 @@ class pException(Exception):
         Exception.__init__(self, mismatch)
     
 def add_user():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     u = request.form['username']
     p = request.form['password']
     r = request.form['realname']
@@ -75,8 +75,8 @@ def add_user():
         raise pException(e)
 
 def del_user():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     uid = request.form['uid']
     try:
         g.db.execute("DELETE FROM users WHERE id = ?", [ uid ])
@@ -93,14 +93,14 @@ def get_user(name=False, uid=False):
     return q.fetchone()
 
 def get_users():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     q = g.db.execute('SELECT * FROM users ORDER BY username')
     return q.fetchall()
 
 def add_node():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     d = request.form['description']
     i = request.form['ipaddress']
     p = request.form['port']
@@ -115,8 +115,8 @@ def add_node():
         raise pException(e)
 
 def del_node():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     nodeid = request.form['nodeid']
     try:
         g.db.execute("DELETE FROM nodes WHERE id = ?", [nodeid])
@@ -136,8 +136,8 @@ def get_pool_types():
     return q.fetchall()
 
 def add_pool_node(nid, pid, owner):
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     try:
         g.db.execute('INSERT INTO poolnodes (node, pool, owner) \
             VALUES (?, ?, ?)', [ nid, pid, owner ])
@@ -147,8 +147,8 @@ def add_pool_node(nid, pid, owner):
         raise pException(e)
 
 def del_pool_node():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     pnodeid = request.form['pnodeid']
     try:
         g.db.execute("DELETE FROM poolnodes WHERE id = ?", [pnodeid])
@@ -159,8 +159,8 @@ def del_pool_node():
 
 
 def add_pool():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     i = request.form['poolname']
     p = request.form['pooltype']
     m = request.form.getlist('members[]')
@@ -179,8 +179,8 @@ def add_pool():
         raise pException(e)
  
 def del_pool():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     poolid = request.form['poolid']
     try:
         g.db.execute("DELETE FROM pools WHERE id = ?", [poolid])
@@ -209,8 +209,8 @@ def get_vips():
     return q.fetchall()
 
 def add_vip():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     i = request.form['ipaddress']
     p = request.form['port']
     pl = request.form['pool']
@@ -225,8 +225,8 @@ def add_vip():
         raise pException(e)
 
 def del_vip():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     vipid = request.form['vipid']
     try:
         g.db.execute("DELETE FROM vips WHERE id = ?", [vipid])
@@ -271,8 +271,8 @@ def login():
 
 @app.route('/users', methods=['GET', 'POST'])
 def users():
-    if check_if_admin() == False:
-        return False
+    if not check_if_admin():
+        raise pException("Permission denied")
     error = None
     if request.method == 'POST':
         a = request.form.get('action')
