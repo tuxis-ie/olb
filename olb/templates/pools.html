@@ -15,7 +15,7 @@
                         return false;
                     } else {
                         $.jGrowl(json.message);
-                        $( "#tabs" ).tabs( "load", 3 );
+                        $( "#tabs" ).tabs( "load", 2 );
                         return false;
                     }
                 }
@@ -30,6 +30,49 @@
                 url: "/pools",
                 dataType: "json",
                 data: "action=delete&poolid="+pid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 2 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+    $(".pndel" ).click(function( event ) {
+        pnid = $(this).attr('id');
+        if ( pnid ) {
+            $.ajax({
+                type: "POST",
+                url: "/pools",
+                dataType: "json",
+                data: "action=delete_pn&pnid="+pnid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 2 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+    $(".pnadd input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $(this).parents('form:first');
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/pools",
+                dataType: "json",
+                data: form_data.serialize(),
                 success: function( json ) {
                     if (json.error != undefined) {
                         $.jGrowl(json.error);
@@ -71,7 +114,10 @@
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
-      <td><input type="submit" name="padd-submit" id="paddsubmit" value="Add pool" /></td>
+      <td>
+        <input type="hidden" name="action" value="add" />
+        <input type="submit" name="padd-submit" id="paddsubmit" value="Add pool" />
+      </td>
     </tr>
   </table>
   </form>
@@ -98,9 +144,24 @@
       <td>
         <ul>
           {% for node in pool.nodes %}
-          <li>{{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</li>
+          <li>
+            {% if session.username == "admin" %}
+            <a href="#" class="pndel" id="{{ node.nodeid }}">X</a>&nbsp;
+            {% endif %}
+            {{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</li>
           {% endfor %}
         </ul>
+        {% if session.username == "admin" %}
+        <form method="POST" action="/pools" class="pnadd">
+          <select name="nodeid">
+          {% for anode in pool.anodes %}
+            <option value="{{ anode.id }}">{{ anode.description }} ({{anode.ip | ip_convert }}:{{ anode.port }})</option>
+          {% endfor %}
+          <input type="hidden" name="poolid" value="{{ pool.id }}" />
+          <input type="hidden" name="action" value="add_pool_node" />
+          <input type="submit" name="pnadd-submit" id="pnadd-submit" value="Add to pool" />
+        </form>
+        {% endif %}
       </td>
       <td>{{ pool.typename }}</td>
     </tr>
