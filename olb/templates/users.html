@@ -7,9 +7,9 @@
             $.ajax({
                 type: "POST",
                 url: "/users",
+                dataType: "json",
                 data: form_data,
-                success: function( msg ) {
-                    var json = JSON.parse(msg);
+                success: function( json ) {
                     if (json.error != undefined) {
                         $.jGrowl(json.error);
                         return false;
@@ -28,9 +28,9 @@
             $.ajax({
                 type: "POST",
                 url: "/users",
+                dataType: "json",
                 data: "action=delete&uid="+uid,
-                success: function( msg ) {
-                    var json = JSON.parse(msg);
+                success: function( json ) {
                     if (json.error != undefined) {
                         $.jGrowl(json.error);
                         return false;

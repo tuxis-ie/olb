@@ -7,14 +7,38 @@
             $.ajax({
                 type: "POST",
                 url: "/vips",
+                dataType: "json",
                 data: form_data,
-                success: function( msg ) {
-                    var json = JSON.parse(msg);
-                    if (json.error != '') {
-                        alert(json.error);
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $.jGrowl(json.message);
+                        $( "#tabs" ).tabs( "load", 1 );
                         return false;
                     }
-                    $( "#tabs" ).tabs( "load", 1 );
+                }
+            });
+        }
+    });
+    $(".vdel" ).click(function( event ) {
+        vipid = $(this).attr('id');
+        if ( vipid ) {
+            $.ajax({
+                type: "POST",
+                url: "/vips",
+                dataType: "json",
+                data: "action=delete&vipid="+vipid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 1 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
                 }
             });
         }
@@ -44,7 +68,10 @@
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
-      <td><input type="submit" name="vadd-submit" id="vaddsubmit" value="Add vip" /></td>
+      <td>
+        <input type="hidden" name="action" value="add" />
+        <input type="submit" name="vadd-submit" id="vaddsubmit" value="Add vip" />
+      </td>
     </tr>
   </table>
   </form>
@@ -55,12 +82,18 @@
   <h2>Current vips</h2>
   <table class="vtable">
     <tr>
+      {% if session.username == "admin" %}
+      <th>&nbsp;</th>
+      {% endif %}
       <th>IP Address</th>
       <th>Port</th>
       <th>Pool</th>
     </tr>
   {% for vip in vips %}
     <tr>
+      {% if session.username == "admin" %}
+      <td><a href="#" class="vdel" id="{{ vip.id }}">X</a></td>
+      {% endif %}
       <td>{{ vip.ip | ip_convert }}</td>
       <td>{{ vip.port }}</td>
       <td>{{ vip.poolname }}</td>

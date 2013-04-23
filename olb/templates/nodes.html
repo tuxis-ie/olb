@@ -7,14 +7,38 @@
             $.ajax({
                 type: "POST",
                 url: "/nodes",
+                dataType: "json",
                 data: form_data,
-                success: function( msg ) {
-                    var json = JSON.parse(msg);
-                    if (json.error != '') {
-                        alert(json.error);
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $.jGrowl(json.message);
+                        $( "#tabs" ).tabs( "load", 3 );
                         return false;
                     }
-                    $( "#tabs" ).tabs( "load", 3 );
+                }
+            });
+        }
+    });
+    $(".ndel" ).click(function( event ) {
+        nid = $(this).attr('id');
+        if ( nid ) {
+            $.ajax({
+                type: "POST",
+                url: "/nodes",
+                dataType: "json",
+                data: "action=delete&nodeid="+nid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 3 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
                 }
             });
         }
@@ -38,7 +62,10 @@
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
-      <td><input type="submit" name="nadd-submit" id="naddsubmit" value="Add node" /></td>
+      <td>
+        <input type="hidden" name="action" value="add" />
+        <input type="submit" name="nadd-submit" id="naddsubmit" value="Add node" />
+      </td>
     </tr>
   </table>
   </form>
@@ -49,12 +76,18 @@
   <h2>Current nodes</h2>
   <table class="ntable">
     <tr>
+      {% if session.username == "admin" %}
+      <th>&nbsp;</th>
+      {% endif %}
       <th>Description</th>
       <th>IP Address</th>
       <th>Port</th>
     </tr>
   {% for node in nodes %}
     <tr>
+      {% if session.username == "admin" %}
+      <td><a href="#" class="ndel" id="{{ node.id }}">X</a></td>
+      {% endif %}
       <td>{{ node.description }}</td>
       <td>{{ node.ip | ip_convert }}</td>
       <td>{{ node.port }}</td>

@@ -8,13 +8,37 @@
                 type: "POST",
                 url: "/pools",
                 data: form_data,
-                success: function( msg ) {
-                    var json = JSON.parse(msg);
-                    if (json.error != '') {
-                        alert(json.error);
+                dataType: "json", 
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $.jGrowl(json.message);
+                        $( "#tabs" ).tabs( "load", 3 );
                         return false;
                     }
-                    $( "#tabs" ).tabs( "load", 2 );
+                }
+            });
+        }
+    });
+    $(".pdel" ).click(function( event ) {
+        pid = $(this).attr('id');
+        if ( pid ) {
+            $.ajax({
+                type: "POST",
+                url: "/pools",
+                dataType: "json",
+                data: "action=delete&poolid="+pid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 2 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
                 }
             });
         }
@@ -58,12 +82,18 @@
   <h2>Current pools</h2>
   <table class="ptable">
     <tr>
+      {% if session.username == "admin" %}
+      <th>&nbsp;</th>
+      {% endif %}
       <th>Pool</th>
       <th>Nodes</td>
       <th>Type</td>
     </tr>
   {% for pool in pools %}
     <tr>
+      {% if session.username == "admin" %}
+      <td><a href="#" class="pdel" id="{{ pool.id }}">X</a></td>
+      {% endif %}
       <td>{{ pool.poolname }}</td>
       <td>
         <ul>
