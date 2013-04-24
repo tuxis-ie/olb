@@ -21,7 +21,7 @@ SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M='
 USERNAME = 'admin'
 PASSWORD = 'default'
 
-requiredsettings = [ 'hostname', 'naddr', 'faddr' ]
+requiredsettings = [ 'hostname', 'naddr', 'faddr', 'maxcommits' ]
 
 # create our little application :)
 app = Flask(__name__)
@@ -110,6 +110,7 @@ def checkinput(f, t=None):
     validators['moreemail']['regexp'] = "^([a-zA-Z0-9_\.\-]+\@([a-zA-Z0-9\-]+\.)+[a-zA-Z0-9]{2,4}(,\s*)?)+$"
     validators['faddr'] = validators['email']
     validators['naddr'] = validators['moreemail']
+    validators['maxcommits'] = validators['number']
 
     try:
         if validators[t]['error'] != "":
@@ -149,6 +150,50 @@ def do_commit(tag, msg):
     except Exception, e:
         raise pException(e)
 
+    try:
+        cleanup_commits()
+    except Exception, e:
+        raise pException("While cleaning up commits: %s" % (e))
+
+def remove_commit(tag):
+    cdir = os.path.join(app.config['CONFIGREPO'], tag)
+    try:
+        os.chmod(os.path.join(cdir, 'olb.db'), 0600)
+        os.remove(os.path.join(cdir, 'olb.db'))
+    except:
+        pass
+
+    try:
+        os.remove(os.path.join(cdir, 'message'))
+    except:
+        pass
+
+    try:
+        os.rmdir(cdir)
+    except Exception, e:
+        raise pException(e)
+        
+@adminonly
+def cleanup_commits():
+    settings = get_settings()
+    commits  = get_commits()
+
+    commits.reverse()
+
+    ncommits = len(commits)
+    if ncommits > settings['maxcommits']:
+        tocleanup = int(ncommits)-int(settings['maxcommits'])
+        counter = 0
+        for c in commits:
+            try:
+                remove_commit(c['timestamp'])
+            except Exception, e:
+                raise pException("While removing %s" % (e))
+
+            counter = counter+1
+            if counter >= tocleanup:
+                break
+
 @adminonly
 def do_config_export(tag):
     try:
@@ -184,19 +229,21 @@ def do_config_export(tag):
 
 @adminonly
 def get_commits():
-    commits = {}
+    commits = []
+    ret = []
     for root, dirs, files in os.walk(app.config['CONFIGREPO']):
         if len(dirs) == 0:
             ts = os.path.basename(root)
-            commits[ts] = {}
-            if os.path.isfile(os.path.join(root, 'message')):
-                with open(os.path.join(root, 'message')) as cmsg:
-                    commits[ts]['message'] = cmsg.read()
-                    commits[ts]['timestamp'] = ts
-
-    ret = []
-    for ts in sorted(commits, reverse=True):
-        ret.append(commits[ts])
+            commits.append(ts)
+    
+    for c in sorted(commits, reverse=True):
+        cd = {}
+        root = os.path.join(app.config['CONFIGREPO'], c)
+        if os.path.isfile(os.path.join(root, 'message')):
+            with open(os.path.join(root, 'message')) as cmsg:
+                cd['message'] = cmsg.read()
+                cd['timestamp'] = c
+        ret.append(cd)
 
     return ret
 

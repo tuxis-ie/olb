@@ -42,6 +42,11 @@
       <td>
         <input type="text" name="naddr" id="naddr" placeholder="Email address" value="{{ settings.naddr }}" /></td>
     </tr>
+    <tr>
+      <td>Maximum number of commits to save</td>
+      <td>
+        <input type="text" name="maxcommits" id="maxcommits" placeholder="10" value="{{ settings.maxcommits }}" /></td>
+    </tr>
   </table>
   <input type="hidden" name="action" value="save_all" />
   <input type="submit" />
