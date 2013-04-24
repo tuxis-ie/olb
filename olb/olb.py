@@ -53,7 +53,7 @@ def ip_convert(ip):
     if ip.startswith('4-'):
         return str(ipaddr.IPv4Address(int(ip[2:])))
     elif ip.startswith('6-'):
-        return "[%s]" % str(ipaddr.IPv6Address(long(ip[2:])))
+        return str(ipaddr.IPv6Address(long(ip[2:])))
     else:
         if re.match(".*:.*", ip):
             return str('6-')+str(int(ipaddr.IPv6Address(ip)))
@@ -213,8 +213,10 @@ def do_config_export(tag):
         vip['typeconf'] = v['typeconf']
         vip['nodes'] = []
         pool = {}
-        pq = edb.execute('SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.id = ?', [v['pid']])
+        pq = edb.execute('SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.pool = ?', [v['pid']])
+        print "SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.id = %s" % (v['pid'])
         for n in pq.fetchall():
+            print n
             node = {}
             node['ip'] = n['ip']
             node['port'] = n['port']

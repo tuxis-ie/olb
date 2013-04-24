@@ -127,7 +127,7 @@
       <td>
         <select name="members" required="required" multiple="multiple" size="6">
         {% for node in nodes %}
-          <option value="{{ node.id }}">{{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</option>
+          <option value="{{ node.id }}">{{ node.description }} ({{ node.ip | ip_convert }}-{{ node.port }})</option>
         {% endfor %}
         </select>
       </td>
@@ -178,7 +178,7 @@
             {% if session.username == "admin" %}
             <a href="#" class="pndel" id="{{ node.nodeid }}">X</a>&nbsp;
             {% endif %}
-            {{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</li>
+            {{ node.description }} ({{ node.ip | ip_convert }}-{{ node.port }})</li>
           {% endfor %}
         </ul>
       </td>
@@ -202,7 +202,7 @@
         <form method="POST" action="/pools" class="pnadd">
           <select name="nodeid">
           {% for anode in pool.anodes %}
-            <option value="{{ anode.id }}">{{ anode.description }} ({{anode.ip | ip_convert }}:{{ anode.port }})</option>
+            <option value="{{ anode.id }}">{{ anode.description }} ({{anode.ip | ip_convert }}-{{ anode.port }})</option>
           {% endfor %}
           <input type="hidden" name="poolid" value="{{ pool.id }}" />
           <input type="hidden" name="action" value="add_pool_node" />
