@@ -1,0 +1,49 @@
+<script type="text/javascript">
+    $("#settings").validVal({});
+    $("#settings input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#settings" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/settings",
+                dataType: "json",
+                data: form_data,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 4 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<div class="settings">
+  <h2>Main settings</h2>
+  <form action="/settings" method="POST" id="settings">
+  <table>
+    <tr>
+      <td>Hostname</td>
+      <td><input type="text" name="hostname" id="hostname" required="required" value="{{ settings.hostname }}" /></td>
+    </tr>
+    <tr>
+      <td>Notification sender</td>
+      <td>
+        <input type="text" name="faddr" id="faddr" placeholder="Email address" value="{{ settings.faddr }}" /></td>
+    </tr>
+    <tr>
+      <td>Notification recipients</td>
+      <td>
+        <input type="text" name="naddr" id="naddr" placeholder="Email address" value="{{ settings.naddr }}" /></td>
+    </tr>
+  </table>
+  <input type="hidden" name="action" value="save_all" />
+  <input type="submit" />
+  </form>
+</div>

@@ -91,6 +91,7 @@
 {% if session.username == "admin" %}
 <div class="pools">
   <h2>Add a pool</h2>
+{% if nodes %}
   <form method="POST" action="/pools" id="padd">
   <table class="ptable">
     <tr>
@@ -121,11 +122,15 @@
     </tr>
   </table>
   </form>
+{% else %}
+  <p>No nodes defined yet! You need to <a href="/?rand={{ random }}#nodes">do that</a> before you can proceed.</p>
+{% endif %}
 </div>
 {% endif %}
 
 <div class="plist">
   <h2>Current pools</h2>
+  {% if pools %}
   <table class="ptable">
     <tr>
       {% if session.username == "admin" %}
@@ -167,4 +172,7 @@
     </tr>
   {% endfor %}
   </table>
+  {% else %}
+  <p>No pools defined yet!</p>
+  {% endif %}
 </div>

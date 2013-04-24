@@ -2,6 +2,7 @@
 from __future__ import with_statement
 from contextlib import closing
 import sqlite3
+import uuid
 import json
 from datetime import datetime
 import re
@@ -19,6 +20,8 @@ DEBUG = True
 SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M='
 USERNAME = 'admin'
 PASSWORD = 'default'
+
+requiredsettings = [ 'hostname', 'naddr', 'faddr' ]
 
 # create our little application :)
 app = Flask(__name__)
@@ -57,6 +60,10 @@ def ip_convert(ip):
         else:
             return str('4-')+str(int(ipaddr.IPv4Address(ip)))
 
+@app.context_processor
+def inject_random():
+    return dict(random=uuid.uuid1())
+
 def check_if_admin():
     return session['username'] == 'admin'
 
@@ -94,8 +101,6 @@ def do_config_export(tag):
     except Exception, e:
         raise pException("While trying to open commited db: %s" % (e))
 
-    naddrs = ['mark@tuxis.nl']
-
     vips = []
     q = edb.execute('SELECT v.*, p.id as pid, pt.typeconf FROM vips v, pools p, pooltypes pt WHERE v.pool = p.id AND p.pooltype = pt.id ORDER BY ip')
     for v in q.fetchall():
@@ -113,8 +118,10 @@ def do_config_export(tag):
             vip['nodes'].append(node)
         vips.append(vip)
 
+    settings = get_settings()
+    settings['naddrs'] = settings['naddr'].split(',')
     c = file(os.path.join('/tmp', 'keepalived.conf'), 'w')
-    c.write(render_template('keepalived/keepalived.conf', naddrs=naddrs, vips=vips))
+    c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips))
     c.close()
 
 @adminonly
@@ -132,6 +139,33 @@ def get_commits():
     ret = []
     for ts in sorted(commits, reverse=True):
         ret.append(commits[ts])
+
+    return ret
+
+@adminonly
+def save_setting(key, val, kid = False):
+    try:
+        g.db.execute("REPLACE INTO settings (skey, sval) VALUES (?, ?)", [key, val])
+        g.db.commit()
+    except Exception, e:
+        raise pException("While updating settings: %s", e)
+
+@adminonly
+def req_settings_set():
+    for key in requiredsettings:
+        q = g.db.execute("SELECT * FROM settings WHERE skey = ?", [key])
+        if len(q.fetchall()) == 0:
+            return False
+
+    return True
+
+@adminonly
+def get_settings():
+    ret = {}
+    q = g.db.execute("SELECT * FROM settings")
+    for r in q.fetchall():
+        if r['skey'] in requiredsettings:
+            ret[r['skey']] = r['sval']
 
     return ret
 
@@ -309,6 +343,10 @@ def before_request():
 def teardown_request(exception):
     g.db.close()
 
+@app.route('/index.html')
+def catch_tabs():
+    return render_template('layout.html')
+
 @app.route('/')
 def show_main():
     if not session.get('logged_in'):
@@ -453,6 +491,9 @@ def vips():
 
 @app.route('/commit', methods=['GET', 'POST'])
 def commit():
+    if req_settings_set() == False:
+        return render_template('commit.html', need_settings=True)
+
     if request.method == 'POST':
         cmsg = ""
         try:
@@ -475,6 +516,19 @@ def commit():
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
+    if request.method == 'POST':
+        a = request.form.get('action')
+
+        if a == "save_all":
+            try:
+                for key in requiredsettings:
+                    v = request.form.get(key)
+                    save_setting(key, v)
+                return jsonify(message="All settings saved")
+            except Exception, e:
+                return jsonify(error="Could not save settings: %s" % (e))
+
+    settings = get_settings()
     return render_template('settings.html', settings=settings)
 
 @app.route('/logout')

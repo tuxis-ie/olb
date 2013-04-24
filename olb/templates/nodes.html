@@ -74,6 +74,7 @@
 
 <div class="nlist">
   <h2>Current nodes</h2>
+  {% if nodes %}
   <table class="ntable">
     <tr>
       {% if session.username == "admin" %}
@@ -94,4 +95,7 @@
     </tr>
   {% endfor %}
   </table>
+  {% else %}
+  <p>No nodes defined yet!</p>
+  {% endif %}
 </div>
