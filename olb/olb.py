@@ -80,22 +80,58 @@ def do_commit(tag, msg):
         l.write(msg)
         l.close()
         shutil.copy2(app.config['DATABASE'], os.path.join(cdir, 'olb.db'))
-        os.chmod(os.path.join(cdir, 'olb.db'), 400)
+        os.chmod(os.path.join(cdir, 'olb.db'), 0400)
     except Exception, e:
         raise pException(e)
 
 @adminonly
+def do_config_export(tag):
+    try:
+        cdir = os.path.join(app.config['CONFIGREPO'], tag)
+        edb = sqlite3.connect(os.path.join(cdir, 'olb.db'))
+        edb.row_factory = sqlite3.Row
+        edb.cursor().execute("PRAGMA foreign_keys = ON");
+    except Exception, e:
+        raise pException("While trying to open commited db: %s" % (e))
+
+    naddrs = ['mark@tuxis.nl']
+
+    vips = []
+    q = edb.execute('SELECT v.*, p.id as pid, pt.typeconf FROM vips v, pools p, pooltypes pt WHERE v.pool = p.id AND p.pooltype = pt.id ORDER BY ip')
+    for v in q.fetchall():
+        vip = {}
+        vip['ip'] = v['ip']
+        vip['port'] = v['port']
+        vip['typeconf'] = v['typeconf']
+        vip['nodes'] = []
+        pool = {}
+        pq = edb.execute('SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.id = ?', [v['pid']])
+        for n in pq.fetchall():
+            node = {}
+            node['ip'] = n['ip']
+            node['port'] = n['port']
+            vip['nodes'].append(node)
+        vips.append(vip)
+
+    c = file(os.path.join('/tmp', 'keepalived.conf'), 'w')
+    c.write(render_template('keepalived/keepalived.conf', naddrs=naddrs, vips=vips))
+    c.close()
+
+@adminonly
 def get_commits():
-    ret = []
+    commits = {}
     for root, dirs, files in os.walk(app.config['CONFIGREPO']):
         if len(dirs) == 0:
             ts = os.path.basename(root)
-            c = {}
-            c['timestamp'] = ts
+            commits[ts] = {}
             if os.path.isfile(os.path.join(root, 'message')):
                 with open(os.path.join(root, 'message')) as cmsg:
-                    c['message'] = cmsg.read()
-                ret.append(c)
+                    commits[ts]['message'] = cmsg.read()
+                    commits[ts]['timestamp'] = ts
+
+    ret = []
+    for ts in sorted(commits, reverse=True):
+        ret.append(commits[ts])
 
     return ret
 
@@ -428,6 +464,7 @@ def commit():
         tag = now.strftime("%Y%m%d%H%M%S")
         try:
             do_commit(tag, cmsg)
+            do_config_export(tag)
             return jsonify(message="Commited %s as %s" % (cmsg, tag))
         except Exception, e:
             return jsonify(error="Could not commit: %s" % (e))
@@ -436,6 +473,10 @@ def commit():
 
     return render_template('commit.html', history=commits)
 
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    return render_template('settings.html', settings=settings)
+
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
@@ -443,5 +484,5 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='::')
 

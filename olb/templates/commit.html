@@ -33,8 +33,18 @@
 </div>
 
 <div class="revert">
+<table>
+  <tr>
+    <th>Timestamp</th>
+    <th>Message</th>
+    <th>Revert</th>
+  </tr>
 {% for commit in history %}
-    {{ commit.timestamp }}<br />
-    {{ commit.message }}<br />
+  <tr>
+    <td>{{ commit.timestamp }}</td>
+    <td>{{ commit.message }}</td>
+    <td>Not yet implemented</td>
+  </tr>
 {% endfor %}
+</table>
 </div>

@@ -12,6 +12,13 @@ create table users (
     email string not null
 );
 
+create table settings (
+    id integer primary key autoincrement,
+    skey string not null,
+    sval string not null,
+    unique (skey, sval)
+);
+
 create table nodes (
     id integer primary key autoincrement,
     description string not null,

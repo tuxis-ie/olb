@@ -12,7 +12,7 @@
   <script src="{{ url_for('static', filename='jquery.jgrowl.min.js') }}"></script>
 
   <script>
-  $(function() {
+  $(document).ready(function() {
     $tabs = $("#tabs").tabs({
       beforeLoad: function( event, ui ) {
         ui.jqXHR.error(function() {
@@ -22,6 +22,11 @@
         });
       }
     });
+    var tablist = JSON.parse('{ "main": 0, "vips": 1, "pools": 2, "nodes": 3, "users": 4, "commit" : 5, "settings": 6 }');
+    thash = document.location.hash.replace('#', '');
+    if (thash != undefined && thash != '') {
+        $("#tabs").tabs( "option", "active", tablist[thash] );
+    };
   });
   </script>
 </head>
