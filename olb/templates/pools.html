@@ -86,6 +86,29 @@
             });
         }
     });
+    $(".ptchange select" ).on("change", function( event ) {
+        event.preventDefault();
+        var form_data = $(this).parents('form:first');
+        alert(form_data.serialize());
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/pools",
+                dataType: "json",
+                data: form_data.serialize(),
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 2 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
 </script>
 
 {% if session.username == "admin" %}
@@ -112,6 +135,7 @@
         {% for pooltype in pooltypes %}
           <option value="{{ pooltype.id }}">{{ pooltype.typename }}</option>
         {% endfor %}
+        </select>
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
@@ -156,7 +180,24 @@
             {{ node.description }} ({{ node.ip | ip_convert }}:{{ node.port }})</li>
           {% endfor %}
         </ul>
-        {% if session.username == "admin" %}
+      </td>
+      <td>
+        <form method="POST" action="/pools" class="ptchange">
+        <select name="pooltype" required="required" class="ptchange">
+        {% for pooltype in pooltypes %}
+          <option {% if pool.typename == pooltype.typename %}selected {% endif %}value="{{ pooltype.id }}">{{ pooltype.typename }}</option>
+        {% endfor %}
+        </select>
+        <input type="hidden" name="poolid" value="{{ pool.id }}" />
+        <input type="hidden" name="action" value="ptchange" />
+        </form>
+      </td>
+    </tr>
+    {% if session.username == "admin" %}
+    <tr>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td colspan="2">
         <form method="POST" action="/pools" class="pnadd">
           <select name="nodeid">
           {% for anode in pool.anodes %}
@@ -166,10 +207,9 @@
           <input type="hidden" name="action" value="add_pool_node" />
           <input type="submit" name="pnadd-submit" id="pnadd-submit" value="Add to pool" />
         </form>
-        {% endif %}
       </td>
-      <td>{{ pool.typename }}</td>
     </tr>
+    {% endif %}
   {% endfor %}
   </table>
   {% else %}

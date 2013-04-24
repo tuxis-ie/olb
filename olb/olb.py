@@ -291,6 +291,18 @@ def del_pool():
     except Exception, e:
         raise pException(e)
 
+@adminonly
+def set_pooltype():
+    poolid = request.form['poolid']
+    pooltype = request.form['pooltype']
+
+    try:
+        g.db.execute("UPDATE pools SET pooltype = ? WHERE id = ?", [ pooltype, poolid ])
+        g.db.commit()
+        return True
+    except Exception, e:
+        raise pException(e)
+
 def get_pools():
     o = session['oid']
     q = g.db.execute('SELECT p.*, pt.typename FROM pools p, pooltypes pt WHERE p.owner = ? AND p.pooltype = pt.id ORDER BY poolname', [ o ])
@@ -447,6 +459,12 @@ def pools():
                 return jsonify(message="Node deleted from pool")
             except Exception, e:
                 return jsonify(error="Could not delete node from pool (%s)" % (e))
+        elif a == "ptchange":
+            try:
+                set_pooltype()
+                return jsonify(message="Pooltype changed")
+            except Exception, e:
+                return jsonify(error="Could not change pooltype (%s)" % (e))
 
     dpools = get_pools()
     nodes = get_nodes()
