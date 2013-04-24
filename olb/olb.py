@@ -73,11 +73,16 @@ def adminonly(f):
 
 @adminonly
 def do_commit(tag, msg):
-    os.mkdir(os.path.join(app.config['CONFIGREPO'], tag))
-    l = file(os.path.join(app.config['CONFIGREPO'], tag, 'message'), 'w')
-    l.write(msg)
-    l.close()
-    shutil.copy2(app.config['DATABASE'], os.path.join(app.config['CONFIGREPO'], tag, 'olb.db'))
+    try:
+        cdir = os.path.join(app.config['CONFIGREPO'], tag)
+        os.mkdir(cdir)
+        l = file(os.path.join(cdir, 'message'), 'w')
+        l.write(msg)
+        l.close()
+        shutil.copy2(app.config['DATABASE'], os.path.join(cdir, 'olb.db'))
+        os.chmod(os.path.join(cdir, 'olb.db'), 400)
+    except Exception, e:
+        raise pException(e)
 
 @adminonly
 def get_commits():
@@ -421,12 +426,14 @@ def commit():
     
         now = datetime.now()
         tag = now.strftime("%Y%m%d%H%M%S")
-        do_commit(tag, cmsg)
-        return jsonify(message="Commited %s as %s" % (cmsg, tag))
+        try:
+            do_commit(tag, cmsg)
+            return jsonify(message="Commited %s as %s" % (cmsg, tag))
+        except Exception, e:
+            return jsonify(error="Could not commit: %s" % (e))
 
     commits = get_commits()
 
-    print commits
     return render_template('commit.html', history=commits)
 
 @app.route('/logout')
