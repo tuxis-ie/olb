@@ -78,6 +78,64 @@ def adminonly(f):
         return f(*args, **kwargs)
     return wrapper
 
+def checkinput(f, t=None):
+    t = f if t is None else t
+    validators = {}
+    validators['username'] = {}
+    validators['username']['error'] = "Incorrect username"
+    validators['username']['regexp'] = "^[a-z0-9][-_.a-z0-9]+$"
+    validators['ipaddress'] = {}
+    validators['ipaddress']['error'] = "Incorrect IP address"
+    validators['ipaddress']['regexp'] = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?)$"
+    validators['port'] = {}
+    validators['port']['error'] = "Incorrect port"
+    validators['port']['regexp'] = "^([0-5]?\d?\d?\d?\d|6[0-4]\d\d\d|65[0-4]\d\d|655[0-2]\d|6553[0-5])$"
+    validators['any'] = {}
+    validators['any']['error'] = "Incorrect any"
+    validators['any']['regexp'] = "^.*$"
+    validators['number'] = {}
+    validators['number']['error'] = "Incorrect number"
+    validators['number']['regexp'] = "^[0-9]+$"
+    validators['action'] = {}
+    validators['action']['error'] = "Incorrect action"
+    validators['action']['regexp'] = "^(add|add_pool_node|delete|delete_pn|ptchange|save_all)$"
+    validators['hostname'] = {}
+    validators['hostname']['error'] = "Invalid hostname"
+    validators['hostname']['regexp'] = "^([a-z0-9]([-_a-z0-9]*[-_a-z0-9])?\\.)+((a[cdefgilmnoqrstuwxz]|aero|arpa)|(b[abdefghijmnorstvwyz]|biz)|(c[acdfghiklmnorsuvxyz]|cat|com|coop)|d[ejkmoz]|(e[ceghrstu]|edu)|f[ijkmor]|(g[abdefghilmnpqrstuwy]|gov)|h[kmnrtu]|(i[delmnoqrst]|info|int)|(j[emop]|jobs)|k[eghimnprwyz]|l[abcikrstuvy]|(m[acdghklmnopqrstuvwxyz]|mil|mobi|museum)|(n[acefgilopruz]|name|net)|(om|org)|(p[aefghklmnrstwy]|pro)|qa|r[eouw]|s[abcdeghijklmnortvyz]|(t[cdfghjklmnoprtvwz]|travel)|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw])$"
+    validators['email'] = {}
+    validators['email']['error'] = "Invalid emailaddress"
+    validators['email']['regexp'] = "^[a-zA-Z0-9_\.\-]+\@([a-zA-Z0-9\-]+\.)+[a-zA-Z0-9]{2,4}$"
+    validators['moreemail'] = {}
+    validators['moreemail']['error'] = "Invalid emailaddress"
+    validators['moreemail']['regexp'] = "^([a-zA-Z0-9_\.\-]+\@([a-zA-Z0-9\-]+\.)+[a-zA-Z0-9]{2,4}(,\s*)?)+$"
+    validators['faddr'] = validators['email']
+    validators['naddr'] = validators['moreemail']
+
+    try:
+        if validators[t]['error'] != "":
+            pass
+    except Exception, e:
+        raise pException("Unknown validator type")
+
+    try:
+        if f.endswith('[]'):
+            v = request.form.getlist(f)
+        else:
+            v = request.form.get(f)
+    except Exception, e:
+        raise pException("Could not find this variable")
+
+    if type(v) is list:
+        for vv in v:
+            if re.match(validators[t]['regexp'], vv) == None:
+                raise pException("Validation of %s (%s)failed" % (f, vv))
+        return v
+    else:
+        if re.match(validators[t]['regexp'], v) != None:
+            return v
+        else:
+            raise pException("Validation of %s (%s) failed" % (f, v))
+
 @adminonly
 def do_commit(tag, msg):
     try:
@@ -171,10 +229,14 @@ def get_settings():
 
 @adminonly
 def add_user():
-    u = request.form['username']
-    p = request.form['password']
-    r = request.form['realname']
-    e = request.form['email']
+    try:
+        u = checkinput('username')
+        p = checkinput('password', 'any')
+        r = checkinput('realname', 'any')
+        e = checkinput('email')
+    except Exception, e:
+        raise pException(e)
+
 
     try:
         g.db.execute("INSERT INTO users (username, realname, password, email) \
@@ -186,8 +248,8 @@ def add_user():
 
 @adminonly
 def del_user():
-    uid = request.form['uid']
     try:
+        uid = checkinput('uid', 'number')
         g.db.execute("DELETE FROM users WHERE id = ?", [ uid ])
         g.db.commit()
         return True
@@ -208,9 +270,13 @@ def get_users():
 
 @adminonly
 def add_node():
-    d = request.form['description']
-    i = request.form['ipaddress']
-    p = request.form['port']
+    try:
+        d = checkinput('description', 'any')
+        i = checkinput('ipaddress')
+        p = checkinput('port')
+    except Exception, e:
+        raise pException(e)
+
     o = session['oid']
 
     try:
@@ -223,8 +289,8 @@ def add_node():
 
 @adminonly
 def del_node():
-    nodeid = request.form['nodeid']
     try:
+        nodeid = checkinput('nodeid', 'number')
         g.db.execute("DELETE FROM nodes WHERE id = ?", [nodeid])
         g.db.commit()
         return True
@@ -254,8 +320,8 @@ def add_pool_node(nid, pid, owner):
 
 @adminonly
 def del_pool_node():
-    pnodeid = request.form.get('pnid')
     try:
+        pnodeid = checkinput('pnid', 'number')
         g.db.execute("DELETE FROM poolnodes WHERE id = ?", [pnodeid])
         g.db.commit()
         return True
@@ -264,13 +330,13 @@ def del_pool_node():
 
 @adminonly
 def add_pool():
-    i = request.form['poolname']
-    p = request.form['pooltype']
-    m = request.form.getlist('members[]')
-    oid = session['oid']
 
     # Do a member-ownership check
     try:
+        i = checkinput('poolname', 'any')
+        p = checkinput('pooltype', 'number')
+        m = checkinput('members[]', 'number')
+        oid = session['oid']
         q = g.db.execute("INSERT INTO pools (poolname, owner, pooltype) \
             VALUES (?, ?, ?)", [i, oid, p])
         pid = q.lastrowid
@@ -283,8 +349,8 @@ def add_pool():
  
 @adminonly
 def del_pool():
-    poolid = request.form['poolid']
     try:
+        poolid = checkinput('poolid', 'number')
         g.db.execute("DELETE FROM pools WHERE id = ?", [poolid])
         g.db.commit()
         return True
@@ -293,10 +359,9 @@ def del_pool():
 
 @adminonly
 def set_pooltype():
-    poolid = request.form['poolid']
-    pooltype = request.form['pooltype']
-
     try:
+        poolid = checkinput('poolid', 'number')
+        pooltype = checkinput('pooltype', 'number')
         g.db.execute("UPDATE pools SET pooltype = ? WHERE id = ?", [ pooltype, poolid ])
         g.db.commit()
         return True
@@ -324,12 +389,12 @@ def get_vips():
 
 @adminonly
 def add_vip():
-    i = request.form['ipaddress']
-    p = request.form['port']
-    pl = request.form['pool']
-    o = session['oid']
 
     try:
+        i = checkinput('ipaddress')
+        p = checkinput('port')
+        pl = checkinput('pool', 'number')
+        o = session['oid']
         g.db.execute("INSERT INTO vips (ip, port, pool, owner) \
             VALUES (?, ?, ?, ?)", [ip_convert(i), p, pl, o])
         g.db.commit()
@@ -339,8 +404,8 @@ def add_vip():
 
 @adminonly
 def del_vip():
-    vipid = request.form['vipid']
     try:
+        vipid = checkinput('vipid', 'number')
         g.db.execute("DELETE FROM vips WHERE id = ?", [vipid])
         g.db.commit()
         return True
@@ -366,8 +431,12 @@ def show_main():
 def login():
     error = None
     if request.method == 'POST':
-        u = request.form['username']
-        p = request.form['password']
+        try:
+            u = checkinput('username')
+            p = checkinput('password', 'any')
+        except Exception, e:
+            error = 'Invalid username or password'
+            return render_template('login.html', error=error)
 
         q = g.db.execute('SELECT password FROM users WHERE username = ?', [ u ])
         r = q.fetchone()
@@ -386,22 +455,25 @@ def login():
 def users():
     error = None
     if request.method == 'POST':
-        a = request.form.get('action')
+        try:
+            a = checkinput('action')
+        except Exception, e:
+            return jsonify(error="Could not execute action (%s)" % ( e ))
+            
         if a == "add":
-            u = request.form.get('username')
             try:
                 add_user()
-                return jsonify(message="Added user %s!" % ( u ))
+                return jsonify(message="Added user")
             except Exception, e:
-                return jsonify(error="Could not add user %s (%s)" % ( u, e ))
+                return jsonify(error="Could not add user (%s)" % ( e ))
         elif a == "delete":
-            uid = request.form.get('uid')
+            uid = checkinput('uid', 'number')
             u = get_user(uid=uid)['username']
             try:
                 del_user()
-                return jsonify(message="User %s deleted (and all it's settings)!" % ( u ))
+                return jsonify(message="User deleted")
             except Exception, e:
-                return jsonify(error="Could not delete user %s (%s)" % ( u, e ))
+                return jsonify(error="Could not delete user (%s)" % ( e ))
 
     users = get_users()
     return render_template('users.html', users=users)
@@ -410,7 +482,11 @@ def users():
 def nodes():
     error = None
     if request.method == 'POST':
-        a = request.form.get('action')
+        try:
+            a = checkinput('action')
+        except Exception, e:
+            return jsonify(error="Could not execute action (%s)" % ( e ))
+
         if a == "add":
             try:
                 add_node()
@@ -431,7 +507,11 @@ def nodes():
 def pools():
     error = None
     if request.method == 'POST':
-        a = request.form.get('action')
+        try:
+            a = checkinput('action')
+        except Exception, e:
+            return jsonify(error="Could not execute action (%s)" % ( e ))
+
         if a == "add":
             try:
                 add_pool()
@@ -446,8 +526,8 @@ def pools():
                 return jsonify(error="Cannot delete pool (%s)" % (e))
         elif a == "add_pool_node":
             try:
-                nid = request.form.get('nodeid')
-                pid = request.form.get('poolid')
+                nid = checkinput('nodeid', 'number')
+                pid = checkinput('poolid', 'number')
                 owner = session['oid']
                 add_pool_node(nid, pid, owner)
                 return jsonify(message="Node added to pool")
@@ -485,7 +565,11 @@ def pools():
 def vips():
     error = None
     if request.method == 'POST':
-        a = request.form.get('action')
+        try:
+            a = checkinput('action')
+        except Exception, e:
+            return jsonify(error="Could not execute action (%s)" % ( e ))
+
         if a == "add":
             try:
                 add_vip()
@@ -511,7 +595,7 @@ def commit():
     if request.method == 'POST':
         cmsg = ""
         try:
-            cmsg = request.form.get('cmsg')
+            cmsg = checkinput('cmsg', 'any')
         except:
             cmsg = "new commit"
     
@@ -531,12 +615,15 @@ def commit():
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     if request.method == 'POST':
-        a = request.form.get('action')
+        try:
+            a = checkinput('action')
+        except Exception, e:
+            return jsonify(error="Could not execute action (%s)" % ( e ))
 
         if a == "save_all":
             try:
                 for key in requiredsettings:
-                    v = request.form.get(key)
+                    v = checkinput(key)
                     save_setting(key, v)
                 return jsonify(message="All settings saved")
             except Exception, e:
