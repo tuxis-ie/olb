@@ -343,10 +343,6 @@ def before_request():
 def teardown_request(exception):
     g.db.close()
 
-@app.route('/index.html')
-def catch_tabs():
-    return render_template('layout.html')
-
 @app.route('/')
 def show_main():
     if not session.get('logged_in'):
