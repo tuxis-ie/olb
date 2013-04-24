@@ -1,4 +1,5 @@
 <script type="text/javascript">
+    $("#settings").validVal({});
     $("#settings input:submit" ).click(function( event ) {
         event.preventDefault();
         var form_data = $( "#settings" ).triggerHandler( "submitForm" );
