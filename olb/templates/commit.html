@@ -1,5 +1,4 @@
 <script type="text/javascript">
-    $("#commit").validVal({});
     $("#commit input:submit" ).click(function( event ) {
         event.preventDefault();
         var form_data = $( "#commit" ).triggerHandler( "submitForm" );
@@ -33,11 +32,12 @@
 <div class="commit">
   <h2>Commit current config</h2>
   <form method="POST" action="/commit" id="commit">
-    <input type="text" name="cmsg" placeholder="Commitbericht"/>
+    <input type="text" name="cmsg" placeholder="Commit message"/>
     <input type="submit" name="submit" value="Commit!" />
   </form>
 </div>
 
+{% if history %}
 <div class="revert">
 <table>
   <tr>
@@ -54,4 +54,5 @@
 {% endfor %}
 </table>
 </div>
+{% endif %}
 {% endif %}

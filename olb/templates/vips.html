@@ -1,5 +1,4 @@
 <script type="text/javascript">
-    $("#vadd").validVal({});
     $("#vadd input:submit" ).click(function( event ) {
         event.preventDefault();
         var form_data = $( "#vadd" ).triggerHandler( "submitForm" );
@@ -47,8 +46,8 @@
 
 {% if session.username == "admin" %}
 <div class="vips">
-  {% if pools %}
   <h2>Add a vip</h2>
+  {% if pools %}
   <form method="POST" action="/vips" id="vadd">
   <table class="utable">
     <tr>

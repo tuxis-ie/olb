@@ -243,7 +243,7 @@ def get_commits():
             with open(os.path.join(root, 'message')) as cmsg:
                 cd['message'] = cmsg.read()
                 cd['timestamp'] = c
-        ret.append(cd)
+            ret.append(cd)
 
     return ret
 

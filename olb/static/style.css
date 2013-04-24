@@ -1,24 +1,72 @@
-body            { font-family: sans-serif; background: #eee; }
-a, h1, h2       { color: #377BA8; }
-h1, h2          { font-family: 'Georgia', serif; margin: 0; }
-h1              { border-bottom: 2px solid #eee; }
-h2              { font-size: 1.2em; }
+body {
+    margin: 0px;
+    padding: 0px;
+}
+#mstats {
+    float: left;
+    width: 65%;
+    display: block;
+}
+#mlogs {
+    float: right;
+    width: 34%;
+    display: block;
+}
+.ui-tabs .ui-tabs-panel {
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    margin-bottom: 5px;
+}
 
-.page           { margin: 2em auto; width: 35em; border: 5px solid #ccc;
-                  padding: 0.8em; background: white; }
-.entries        { list-style: none; margin: 0; padding: 0; }
-.entries li     { margin: 0.8em 1.2em; }
-.entries li h2  { margin-left: -1em; }
-.add-entry      { font-size: 0.9em; border-bottom: 1px solid #ccc; }
-.add-entry dl   { font-weight: bold; }
-.metanav        { text-align: right; font-size: 0.8em; padding: 0.3em;
-                  margin-bottom: 1em; background: #fafafa; }
-.flash          { background: #CEE5F5; padding: 0.5em;
-                  border: 1px solid #AACBE2; }
-.error          { background: #F0D6D6; padding: 0.5em; }
-.login          { margin-top: 150px;
-                  margin-left: auto;
-                  margin-right: auto;
-                  border: 1px solid;
-                  width: 400px; }
+h2,p {
+    padding: 2px;
+    margin-top: 2px;
+    margin-bottom: 10px;
+}
 
+h2 {
+    color: #2779aa;
+}
+
+ul {
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding-left: 5px;
+}
+
+li {
+    list-style-image: none;
+    list-style: none;
+    margin-left: 5px;
+}
+
+td, th {
+    padding-right: 15px;
+    padding-left: 5px;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    border: 1px solid #aed0ea;
+    background: #d7ebf9 url(images/ui-bg_glass_80_d7ebf9_1x400.png) 50% 50% repeat-x;
+    font-weight: bold;
+    color: #2779aa;
+}
+
+.login {
+    margin-top: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 340px;
+    text-align: center;
+}
+
+.login h2 {
+    border: 1px solid #aed0ea;
+    background: #d7ebf9 url(images/ui-bg_glass_80_d7ebf9_1x400.png) 50% 50% repeat-x;
+    font-weight: bold;
+    color: #2779aa;
+}

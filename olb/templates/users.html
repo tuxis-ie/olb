@@ -1,5 +1,4 @@
 <script type="text/javascript">
-    $("#uadd").validVal({});
     $("#uadd input:submit" ).click(function( event ) {
         event.preventDefault();
         var form_data = $( "#uadd" ).triggerHandler( "submitForm" );
@@ -52,7 +51,7 @@
     <tr>
       <th>Username</th>
       <th>Realname</th>
-      <th>Emailaddress</th>
+      <th>Email address</th>
       <th>Password</th>
     </tr>
     <tr>
@@ -79,7 +78,7 @@
       <td>&nbsp;</td>
       <th>Username</th>
       <th>Realname</th>
-      <th>Emailaddress</th>
+      <th>Email address</th>
     </tr>
   {% for user in users %}
     <tr>

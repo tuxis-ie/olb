@@ -1,5 +1,4 @@
 <script type="text/javascript">
-    $("#padd").validVal({});
     $("#padd input:submit" ).click(function( event ) {
         event.preventDefault();
         var form_data = $( "#padd" ).triggerHandler( "submitForm" );
@@ -120,6 +119,7 @@
     <tr>
       <th>Pool name</th>
       <th>Pool members</th>
+      <th>Pool type</th>
     </tr>
     <tr>
       <td><input type="text" id="poolname" name="poolname" placeholder="Pool name" required="required"/></td>
@@ -158,7 +158,7 @@
   <table class="ptable">
     <tr>
       {% if session.username == "admin" %}
-      <th>&nbsp;</th>
+      <td>&nbsp;</td>
       {% endif %}
       <th>Pool</th>
       <th>Nodes</td>

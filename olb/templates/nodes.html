@@ -1,5 +1,4 @@
 <script type="text/javascript">
-    $("#nadd").validVal({});
     $("#nadd input:submit" ).click(function( event ) {
         event.preventDefault();
         var form_data = $( "#nadd" ).triggerHandler( "submitForm" );
@@ -78,7 +77,7 @@
   <table class="ntable">
     <tr>
       {% if session.username == "admin" %}
-      <th>&nbsp;</th>
+      <td>&nbsp;</td>
       {% endif %}
       <th>Description</th>
       <th>IP Address</th>
