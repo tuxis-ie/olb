@@ -342,7 +342,11 @@ def del_node():
         g.db.commit()
         return True
     except Exception, e:
-        raise pException(e)
+        error = str(e)
+        if error == "foreign key constraint failed":
+            error = "Is this node still part of a pool?"
+
+        raise pException(error)
 
 def get_nodes():
     o = session['oid']
@@ -402,7 +406,11 @@ def del_pool():
         g.db.commit()
         return True
     except Exception, e:
-        raise pException(e)
+        error = str(e)
+        if error == "foreign key constraint failed":
+            error = "Is this pool still used by a vip?"
+
+        raise pException(error)
 
 @adminonly
 def set_pooltype():

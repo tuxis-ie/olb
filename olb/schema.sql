@@ -3,6 +3,8 @@ drop table if exists nodes;
 drop table if exists pools;
 drop table if exists poolnodes;
 drop table if exists vips;
+drop table if exists settings;
+drop table if exists pooltypes;
 
 create table users (
     id integer primary key autoincrement,
@@ -50,7 +52,7 @@ create table pools (
 
 create table poolnodes (
     id integer primary key autoincrement,
-    node integer not null references nodes(id) on update cascade on delete cascade,
+    node integer not null references nodes(id) on update cascade on delete restrict,
     pool integer not null references pools(id) on update cascade on delete cascade,
     owner integer not null default 1 references users(id) on update cascade on delete set default,
     unique (node, pool, owner)
