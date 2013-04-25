@@ -16,6 +16,7 @@ import shutil
 # configuration
 CONFIGREPO = "config"
 DATABASE = CONFIGREPO+'/olb.db'
+RRDDIR = "rrd"
 DEBUG = True
 SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M='
 USERNAME = 'admin'
@@ -688,6 +689,19 @@ def settings():
 
     settings = get_settings()
     return render_template('settings.html', settings=settings)
+
+@app.route('/stats', defaults={'mode': None, 'node': None})
+@app.route('/stats/<mode>', defaults={'node': None})
+@app.route('/stats/<mode>/<node>')
+def stats(mode, node):
+    if mode == "system":
+        return "Systeemgrafiekjes"
+
+    return "%s %s" % (mode, node)
+
+@app.route('/graph')
+def graph():
+    return url_for('static', filename="cache/foo.png")
 
 @app.route('/logout')
 def logout():
