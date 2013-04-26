@@ -22,6 +22,28 @@
             });
         }
     });
+    $(".uedit input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $(this).parents('form:first');
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/users",
+                dataType: "json",
+                data: form_data.serialize(),
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 2 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
     $(".udel" ).click(function( event ) {
         uid = $(this).attr('id');
         if ( uid ) {
@@ -80,13 +102,22 @@
       <th>Username</th>
       <th>Realname</th>
       <th>Email address</th>
+      <th>Password</th>
+      <td>&nbsp;</td>
     </tr>
   {% for user in users %}
     <tr>
       <td><a href="#" class="udel" id="{{ user.id }}">X</a></td>
       <td>{{ user.username }}</td>
-      <td>{{ user.realname }}</td>
-      <td>{{ user.email }}</td>
+      <td colspan="3"><form method="POST" action="/users" class="uedit">
+      <input type="text" name="realname" required="required" value="{{ user.realname }}" />
+      <input type="text" name="email" required="required" value="{{ user.email }}" />
+      <input type="password" name="password" placeholder="Only if new" value="unchanged" />
+      <input type="submit" name="ueditsubmit" id="ueditsubmit" value="Update" />
+    <input type="hidden" name="action" value="edit" />
+    <input type="hidden" name="username" value="{{ user.username }}" />
+    </form>
+    </td>
     </tr>
   {% endfor %}
   </table>

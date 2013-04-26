@@ -99,7 +99,7 @@ def checkinput(f, t=None):
     validators['number']['regexp'] = "^[0-9]+$"
     validators['action'] = {}
     validators['action']['error'] = "Incorrect action"
-    validators['action']['regexp'] = "^(add|add_pool_node|delete|delete_pn|ptchange|save_all)$"
+    validators['action']['regexp'] = "^(add|add_pool_node|delete|delete_pn|ptchange|save_all|edit)$"
     validators['hostname'] = {}
     validators['hostname']['error'] = "Invalid hostname"
     validators['hostname']['regexp'] = "^([a-z0-9]([-_a-z0-9]*[-_a-z0-9])?\\.)+((a[cdefgilmnoqrstuwxz]|aero|arpa)|(b[abdefghijmnorstvwyz]|biz)|(c[acdfghiklmnorsuvxyz]|cat|com|coop)|d[ejkmoz]|(e[ceghrstu]|edu)|f[ijkmor]|(g[abdefghilmnpqrstuwy]|gov)|h[kmnrtu]|(i[delmnoqrst]|info|int)|(j[emop]|jobs)|k[eghimnprwyz]|l[abcikrstuvy]|(m[acdghklmnopqrstuvwxyz]|mil|mobi|museum)|(n[acefgilopruz]|name|net)|(om|org)|(p[aefghklmnrstwy]|pro)|qa|r[eouw]|s[abcdeghijklmnortvyz]|(t[cdfghjklmnoprtvwz]|travel)|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw])$"
@@ -291,6 +291,26 @@ def add_user():
     try:
         g.db.execute("INSERT INTO users (username, realname, password, email) \
             VALUES (?, ?, ?, ?)", [u, r, hashpw(p, gensalt()), e])
+        g.db.commit()
+        return True
+    except Exception, e:
+        raise pException(e)
+
+@adminonly
+def edit_user():
+    try:
+        u = checkinput('username')
+        p = checkinput('password', 'any')
+        r = checkinput('realname', 'any')
+        e = checkinput('email')
+    except Exception, e:
+        raise pException(e)
+
+    try:
+        if p != "unchanged":
+            g.db.execute("UPDATE users SET username = ?, realname = ?, password = ?, email = ? WHERE username = ?", [u, r, hashpw(p, gensalt()), e, u])
+        else:
+            g.db.execute("UPDATE users SET username = ?, realname = ?, email = ? WHERE username = ?", [u, r, e, u])
         g.db.commit()
         return True
     except Exception, e:
@@ -532,6 +552,12 @@ def users():
                 return jsonify(message="User deleted")
             except Exception, e:
                 return jsonify(error="Could not delete user (%s)" % ( e ))
+        if a == "edit":
+            try:
+                edit_user()
+                return jsonify(message="Updated user")
+            except Exception, e:
+                return jsonify(error="Could not update user (%s)" % ( e ))
 
     users = get_users()
     return render_template('users.html', users=users)
