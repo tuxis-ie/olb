@@ -5,6 +5,7 @@ import sqlite3
 import uuid
 import json
 from datetime import datetime
+from socket import gethostname
 import re
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, jsonify
@@ -34,7 +35,7 @@ if os.path.isfile(SECRET) == False:
 
 SECRET_KEY=open(SECRET).read()
 
-requiredsettings = [ 'hostname', 'naddr', 'faddr', 'maxcommits' ]
+requiredsettings = [ 'naddr', 'faddr', 'maxcommits' ]
 
 # create our little application :)
 app = Flask(__name__)
@@ -284,6 +285,8 @@ def get_settings():
     for r in q.fetchall():
         if r['skey'] in requiredsettings:
             ret[r['skey']] = r['sval']
+
+    ret['hostname'] = gethostname()
 
     return ret
 
