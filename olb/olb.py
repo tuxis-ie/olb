@@ -491,6 +491,16 @@ def add_vip():
         p = checkinput('port')
         pl = checkinput('pool', 'number')
         o = session['oid']
+
+        ipfamily = False
+        for n in get_pool_nodes(pl):
+            if n['ip'] != None:
+                ipfamily = get_node_family(n['nodeid'])
+                break
+
+        if ipfamily == False or ipfamily != ip_convert(i)[0]:
+            raise pException("You cannot mix IPv4 and IPv6")
+
         g.db.execute("INSERT INTO vips (ip, port, pool, owner) \
             VALUES (?, ?, ?, ?)", [ip_convert(i), p, pl, o])
         g.db.commit()
