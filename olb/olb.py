@@ -18,7 +18,7 @@ CONFIGREPO = "config"
 DATABASE = CONFIGREPO+'/olb.db'
 RRDDIR = "rrd"
 DEBUG = True
-SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M='
+SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M=' # Needs some fixing. Seems to be very important to really be secret
 USERNAME = 'admin'
 PASSWORD = 'default'
 
@@ -215,9 +215,7 @@ def do_config_export(tag):
         vip['nodes'] = []
         pool = {}
         pq = edb.execute('SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.pool = ?', [v['pid']])
-        print "SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.id = %s" % (v['pid'])
         for n in pq.fetchall():
-            print n
             node = {}
             node['ip'] = n['ip']
             node['port'] = n['port']
@@ -377,6 +375,15 @@ def get_nodes():
 
     return q.fetchall()
 
+def get_node_family(nid):
+    q = g.db.execute("SELECT ip FROM nodes WHERE id = ?", [nid])
+    r = q.fetchone()['ip']
+
+    if r.startswith('4-'):
+        return "4"
+    else:
+        return "6"
+
 def get_pool_types():
     q = g.db.execute('SELECT * FROM pooltypes');
     return q.fetchall()
@@ -384,6 +391,17 @@ def get_pool_types():
 def add_pool_node(nid, pid, owner):
     if not check_if_admin():
         raise pException("Permission denied")
+
+    ipfamily = False
+
+    for n in get_pool_nodes(pid):
+        if n['ip'] != None:
+            ipfamily = get_node_family(n['nodeid'])
+            break
+
+    if ipfamily != False and get_node_family(nid) != ipfamily:
+        raise pException("You cannot mix IPv4 and IPv6")
+
     try:
         g.db.execute('INSERT INTO poolnodes (node, pool, owner) \
             VALUES (?, ?, ?)', [ nid, pid, owner ])
@@ -454,7 +472,7 @@ def get_pools():
 
 def get_pool_nodes(poolid):
     o = session['oid']
-    q = g.db.execute('SELECT p.*, n.*, pn.id as nodeid FROM pools p, nodes n, poolnodes pn \
+    q = g.db.execute('SELECT p.*, n.*, n.id as nodeid, pn.id as pnid FROM pools p, nodes n, poolnodes pn \
         WHERE p.owner = ? and n.id = pn.node and pn.pool = p.id AND p.id = ? ORDER BY n.ip', [ o, poolid ])
 
     return q.fetchall()

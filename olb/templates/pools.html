@@ -176,7 +176,7 @@
           {% for node in pool.nodes %}
           <li>
             {% if session.username == "admin" %}
-            <a href="#" class="pndel" id="{{ node.nodeid }}">X</a>&nbsp;
+            <a href="#" class="pndel" id="{{ node.pnid }}">X</a>&nbsp;
             {% endif %}
             {{ node.description }} ({{ node.ip | ip_convert }}-{{ node.port }})</li>
           {% endfor %}
