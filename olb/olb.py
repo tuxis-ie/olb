@@ -13,14 +13,26 @@ from bcrypt import hashpw, gensalt
 import ipaddr
 import shutil
 
+from werkzeug.contrib.securecookie import SecureCookie
+
+class JSONSecureCookie(SecureCookie):
+    serialization_method = json
+
 # configuration
 CONFIGREPO = "config"
 DATABASE = CONFIGREPO+'/olb.db'
+SECRET = CONFIGREPO+'/secret'
 RRDDIR = "rrd"
 DEBUG = True
-SECRET_KEY = 'obUG0QAauhoPQWIz5eCS102KfsDM3rOe/bxtNDtoA0M=' # Needs some fixing. Seems to be very important to really be secret
 USERNAME = 'admin'
 PASSWORD = 'default'
+
+if os.path.isfile(SECRET) == False:
+    f = open(SECRET, 'w')
+    f.write(os.urandom(64))
+    f.close()
+
+SECRET_KEY=open(SECRET).read()
 
 requiredsettings = [ 'hostname', 'naddr', 'faddr', 'maxcommits' ]
 
