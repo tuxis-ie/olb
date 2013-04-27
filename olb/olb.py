@@ -316,8 +316,10 @@ def get_settings():
             ret[r['skey']] = r['sval']
 
     ret['hostname'] = gethostname()
-    ret['syncifacename'] = get_iface(ret['synciface'])['iname']
-    print ret['syncifacename']
+    try:
+        ret['syncifacename'] = get_iface(ret['synciface'])['iname']
+    except:
+        pass
 
     return ret
 
