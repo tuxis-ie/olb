@@ -48,6 +48,7 @@
 {% if session.username == "admin" %}
 <div class="vips">
   <h2>Add a vip</h2>
+  {% if interfaces %}
   {% if pools %}
   <form method="POST" action="/vips" id="vadd">
   <table class="utable">
@@ -55,6 +56,7 @@
       <th>IP Address</th>
       <th>Port</th>
       <th>Pool</th>
+      <th>Interface</th>
     </tr>
     <tr>
       <td><input type="text" id="ipaddress" name="ipaddress" placeholder="IP Address" required="required" /></td>
@@ -63,6 +65,13 @@
         <select name="pool" id="pool" required="required">
         {% for pool in pools %}
           <option value="{{ pool.id }}">{{ pool.poolname }}</option>
+        {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="iface" id="iface" required="required">
+        {% for iface in interfaces %}
+          <option value="{{ iface.id }}">{{ iface.iname }}</option>
         {% endfor %}
         </select>
       </td>
@@ -79,6 +88,9 @@
   {% else %}
   <p>No pools defined yet! You need to <a href="/?rand={{ random }}#pools">do that</a> before you can proceed.</p>
   {% endif %}
+  {% else %}
+  <p>No interfaces defined yet! You need to <a href="/?rand={{ random }}#settings">do that</a> before you can proceed.</p>
+  {% endif %}
 </div>
 {% endif %}
 
@@ -93,6 +105,7 @@
       <th>IP Address</th>
       <th>Port</th>
       <th>Pool</th>
+      <th>Interface</th>
     </tr>
   {% for vip in vips %}
     <tr>
@@ -102,6 +115,7 @@
       <td>{{ vip.ip | ip_convert }}</td>
       <td>{{ vip.port }}</td>
       <td>{{ vip.poolname }}</td>
+      <td>{{ vip.iname }}</td>
     </tr>
   {% endfor %}
   </table>

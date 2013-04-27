@@ -21,6 +21,17 @@ create table settings (
     unique (skey, sval)
 );
 
+create table interfaces (
+    id integer primary key autoincrement,
+    iname string not null unique
+);
+
+create table vrrp (
+    id integer primary key autoincrement,
+    address string nog null unique,
+    interface integer not null references interfaces(id) on update cascade on delete restrict
+);
+
 create table nodes (
     id integer primary key autoincrement,
     description string not null,
@@ -64,5 +75,6 @@ create table vips (
     port string not null,
     pool integer not null references pools(id) on update cascade on delete restrict,
     owner integer not null default 1 references users(id) on update cascade on delete set default,
+    interface integer not null references interfaces(id) on update cascade on delete restrict,
     unique (ip, port)
 );

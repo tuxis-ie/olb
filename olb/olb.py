@@ -35,7 +35,7 @@ if os.path.isfile(SECRET) == False:
 
 SECRET_KEY=open(SECRET).read()
 
-requiredsettings = [ 'naddr', 'faddr', 'maxcommits' ]
+requiredsettings = [ 'naddr', 'faddr', 'maxcommits', 'synciface' ]
 
 # create our little application :)
 app = Flask(__name__)
@@ -49,6 +49,16 @@ def connect_db():
     conn.cursor().execute("PRAGMA foreign_keys = ON");
     return conn
 
+def find_ifaces():
+    with open('/proc/net/dev') as p:
+        for l in p.readlines():
+            fields = l.split(':')
+            if re.match("\s+eth[0-9]+", fields[0]):
+                with closing(connect_db()) as db:
+                    db.execute("INSERT INTO interfaces (iname) \
+                        VALUES (?)", ["".join(fields[0].split())])
+                    db.commit()
+
 def init_db():
     with closing(connect_db()) as db:
         with app.open_resource('schema.sql') as f:
@@ -61,6 +71,7 @@ if os.path.isdir(app.config['CONFIGREPO']) == False:
 
 if os.path.isfile(app.config['DATABASE']) == False:
     init_db()
+    find_ifaces()
 
 @app.template_filter('ip_convert')
 def ip_convert(ip):
@@ -96,23 +107,26 @@ def checkinput(f, t=None):
     t = f if t is None else t
     validators = {}
     validators['username'] = {}
-    validators['username']['error'] = "Incorrect username"
+    validators['username']['error'] = "Invalid username"
     validators['username']['regexp'] = "^[a-z0-9][-_.a-z0-9]+$"
     validators['ipaddress'] = {}
-    validators['ipaddress']['error'] = "Incorrect IP address"
+    validators['ipaddress']['error'] = "Invalid IP address"
     validators['ipaddress']['regexp'] = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?)$"
     validators['port'] = {}
-    validators['port']['error'] = "Incorrect port"
+    validators['port']['error'] = "Invalid port"
     validators['port']['regexp'] = "^([0-5]?\d?\d?\d?\d|6[0-4]\d\d\d|65[0-4]\d\d|655[0-2]\d|6553[0-5])$"
     validators['any'] = {}
-    validators['any']['error'] = "Incorrect any"
+    validators['any']['error'] = "Invalid any"
     validators['any']['regexp'] = "^.*$"
+    validators['iface'] = {}
+    validators['iface']['error'] = "Invalid any"
+    validators['iface']['regexp'] = "^eth[0-9]+$"
     validators['number'] = {}
-    validators['number']['error'] = "Incorrect number"
+    validators['number']['error'] = "Invalid number"
     validators['number']['regexp'] = "^[0-9]+$"
     validators['action'] = {}
-    validators['action']['error'] = "Incorrect action"
-    validators['action']['regexp'] = "^(add|add_pool_node|delete|delete_pn|ptchange|save_all|edit)$"
+    validators['action']['error'] = "Invalid action"
+    validators['action']['regexp'] = "^(add(_pool_node|_iface|_vrrp)?|delete(_pn|_iface|_vrrp)?|ptchange|save_all|edit)$"
     validators['hostname'] = {}
     validators['hostname']['error'] = "Invalid hostname"
     validators['hostname']['regexp'] = "^([a-z0-9]([-_a-z0-9]*[-_a-z0-9])?\\.)+((a[cdefgilmnoqrstuwxz]|aero|arpa)|(b[abdefghijmnorstvwyz]|biz)|(c[acdfghiklmnorsuvxyz]|cat|com|coop)|d[ejkmoz]|(e[ceghrstu]|edu)|f[ijkmor]|(g[abdefghilmnpqrstuwy]|gov)|h[kmnrtu]|(i[delmnoqrst]|info|int)|(j[emop]|jobs)|k[eghimnprwyz]|l[abcikrstuvy]|(m[acdghklmnopqrstuvwxyz]|mil|mobi|museum)|(n[acefgilopruz]|name|net)|(om|org)|(p[aefghklmnrstwy]|pro)|qa|r[eouw]|s[abcdeghijklmnortvyz]|(t[cdfghjklmnoprtvwz]|travel)|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw])$"
@@ -125,6 +139,7 @@ def checkinput(f, t=None):
     validators['faddr'] = validators['email']
     validators['naddr'] = validators['moreemail']
     validators['maxcommits'] = validators['number']
+    validators['synciface'] = validators['number']
 
     try:
         if validators[t]['error'] != "":
@@ -219,12 +234,17 @@ def do_config_export(tag):
         raise pException("While trying to open commited db: %s" % (e))
 
     vips = []
-    q = edb.execute('SELECT v.*, p.id as pid, pt.typeconf FROM vips v, pools p, pooltypes pt WHERE v.pool = p.id AND p.pooltype = pt.id ORDER BY ip')
+    vrrps = []
+    q = edb.execute('SELECT v.*, p.id as pid, pt.typeconf, i.iname \
+        FROM vips v, pools p, pooltypes pt, interfaces i \
+        WHERE v.pool = p.id AND p.pooltype = pt.id AND i.id = v.interface \
+        ORDER BY ip')
     for v in q.fetchall():
         vip = {}
         vip['ip'] = v['ip']
         vip['port'] = v['port']
         vip['typeconf'] = v['typeconf']
+        vip['interface'] = v['iname']
         vip['nodes'] = []
         pool = {}
         pq = edb.execute('SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.pool = ?', [v['pid']])
@@ -234,11 +254,20 @@ def do_config_export(tag):
             node['port'] = n['port']
             vip['nodes'].append(node)
         vips.append(vip)
+        vrrps.append(vip)
+
+    q = edb.execute('SELECT v.*, i.iname FROM vrrp v, interfaces i WHERE i.id = v.interface \
+        ORDER BY address')
+    for v in q.fetchall():
+        vrrp = {}
+        vrrp['ip'] = v['address']
+        vrrp['interface'] = v['iname']
+        vrrps.append(vrrp)
 
     settings = get_settings()
     settings['naddrs'] = settings['naddr'].split(',')
     c = file(os.path.join('/tmp', 'keepalived.conf'), 'w')
-    c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips))
+    c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vrrps=vrrps))
     c.close()
 
 @adminonly
@@ -287,6 +316,8 @@ def get_settings():
             ret[r['skey']] = r['sval']
 
     ret['hostname'] = gethostname()
+    ret['syncifacename'] = get_iface(ret['synciface'])['iname']
+    print ret['syncifacename']
 
     return ret
 
@@ -494,7 +525,8 @@ def get_pool_nodes(poolid):
 
 def get_vips():
     o = session['oid']
-    q = g.db.execute('SELECT v.*, p.poolname FROM vips v, pools p WHERE v.owner = ? AND v.pool = p.id ORDER BY ip', [ o ])
+    q = g.db.execute('SELECT v.*, p.poolname, i.iname FROM vips v, pools p, interfaces i \
+        WHERE v.owner = ? AND v.pool = p.id AND i.id = v.interface ORDER BY ip', [ o ])
 
     return q.fetchall()
 
@@ -505,6 +537,7 @@ def add_vip():
         i = checkinput('ipaddress')
         p = checkinput('port')
         pl = checkinput('pool', 'number')
+        iface = checkinput('iface', 'number')
         o = session['oid']
 
         ipfamily = False
@@ -516,8 +549,8 @@ def add_vip():
         if ipfamily == False or ipfamily != ip_convert(i)[0]:
             raise pException("You cannot mix IPv4 and IPv6")
 
-        g.db.execute("INSERT INTO vips (ip, port, pool, owner) \
-            VALUES (?, ?, ?, ?)", [ip_convert(i), p, pl, o])
+        g.db.execute("INSERT INTO vips (ip, port, pool, interface, owner) \
+            VALUES (?, ?, ?, ?, ?)", [ip_convert(i), p, pl, iface, o])
         g.db.commit()
         return True
     except Exception, e:
@@ -533,6 +566,64 @@ def del_vip():
     except Exception, e:
         raise pException(e)
 
+def add_iface():
+
+    try:
+        iface = checkinput('iface')
+
+        g.db.execute("INSERT INTO interfaces (iname) \
+            VALUES (?)", [iface])
+        g.db.commit()
+        return True
+    except Exception, e:
+        raise pException(e)
+
+@adminonly
+def del_iface():
+    try:
+        ifaceid = checkinput('ifaceid', 'number')
+        g.db.execute("DELETE FROM interfaces WHERE id = ?", [ifaceid])
+        g.db.commit()
+        return True
+    except Exception, e:
+        raise pException(e)
+
+def get_ifaces():
+    q = g.db.execute('SELECT * FROM interfaces')
+
+    return q.fetchall()
+
+def get_iface(ifaceid):
+    q = g.db.execute('SELECT * FROM interfaces WHERE id = ?', [ifaceid])
+
+    return q.fetchone()
+
+def add_vrrp():
+    try:
+        i = checkinput('ipaddress')
+        iface = checkinput('iface', 'number')
+
+        g.db.execute("INSERT INTO vrrp (address, interface) VALUES \
+            (?, ?)", [ip_convert(i), iface])
+        g.db.commit()
+        return True
+    except Exception, e:
+        raise pException(e)
+
+@adminonly
+def del_vrrp():
+    try:
+        v = checkinput('vrrpid', 'number')
+        g.db.execute("DELETE FROM vrrp WHERE id = ?", [v])
+        g.db.commit()
+        return True
+    except Exception, e:
+        raise pException(e)
+
+def get_vrrps():
+    q = g.db.execute('SELECT v.*, i.iname FROM vrrp v, interfaces i WHERE i.id = v.interface')
+
+    return q.fetchall()
 @app.before_request
 def before_request():
     g.db = connect_db()
@@ -712,7 +803,8 @@ def vips():
 
     pools = get_pools()
     vips  = get_vips()
-    return render_template('vips.html', pools=pools, vips=vips)
+    interfaces = get_ifaces()
+    return render_template('vips.html', pools=pools, vips=vips, interfaces=interfaces)
 
 @app.route('/commit', methods=['GET', 'POST'])
 def commit():
@@ -755,9 +847,36 @@ def settings():
                 return jsonify(message="All settings saved")
             except Exception, e:
                 return jsonify(error="Could not save settings: %s" % (e))
+        elif a == "delete_iface":
+            try:
+                del_iface()
+                return jsonify(message="Interface deleted")
+            except Exception, e:
+                return jsonify(error="Could not delete interface: %s" % (e))
+        elif a == "add_iface":
+            try:
+                add_iface()
+                return jsonify(message="Interface added")
+            except Exception, e:
+                return jsonify(error="Could not add interface: %s" % (e))
+        elif a == "delete_vrrp":
+            try:
+                del_vrrp()
+                return jsonify(message="Address deleted")
+            except Exception, e:
+                return jsonify(error="Could not delete addres: %s" % (e))
+        elif a == "add_vrrp":
+            try:
+                add_vrrp()
+                return jsonify(message="Address added")
+            except Exception, e:
+                return jsonify(error="Could not add address: %s" % (e))
+
 
     settings = get_settings()
-    return render_template('settings.html', settings=settings)
+    interfaces = get_ifaces()
+    vrrp = get_vrrps()
+    return render_template('settings.html', settings=settings, interfaces=interfaces, vrrp=vrrp)
 
 @app.route('/stats', defaults={'mode': None, 'node': None})
 @app.route('/stats/<mode>', defaults={'node': None})

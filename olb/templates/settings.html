@@ -14,7 +14,95 @@
                         $.jGrowl(json.error);
                         return false;
                     } else {
-                        $( "#tabs" ).tabs( "load", 4 );
+                        $( "#tabs" ).tabs( "load", 6 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+    $("#addiface").validVal({});
+    $("#addiface input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#addiface" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/settings",
+                dataType: "json",
+                data: form_data,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 6 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+    $("#addvrrp").validVal({});
+    $("#addvrrp input:submit" ).click(function( event ) {
+        event.preventDefault();
+        var form_data = $( "#addvrrp" ).triggerHandler( "submitForm" );
+        if ( form_data ) {
+            $.ajax({
+                type: "POST",
+                url: "/settings",
+                dataType: "json",
+                data: form_data,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 6 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+    $(".idel" ).click(function( event ) {
+        iid = $(this).attr('id');
+        if ( iid ) {
+            $.ajax({
+                type: "POST",
+                url: "/settings",
+                dataType: "json",
+                data: "action=delete_iface&ifaceid="+iid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 6 );
+                        $.jGrowl(json.message);
+                        return false;
+                    }
+                }
+            });
+        }
+    });
+    $(".vdel" ).click(function( event ) {
+        vid = $(this).attr('id');
+        if ( vid ) {
+            $.ajax({
+                type: "POST",
+                url: "/settings",
+                dataType: "json",
+                data: "action=delete_vrrp&vrrpid="+vid,
+                success: function( json ) {
+                    if (json.error != undefined) {
+                        $.jGrowl(json.error);
+                        return false;
+                    } else {
+                        $( "#tabs" ).tabs( "load", 6 );
                         $.jGrowl(json.message);
                         return false;
                     }
@@ -43,8 +131,63 @@
       <td>
         <input type="text" name="maxcommits" id="maxcommits" placeholder="10" value="{{ settings.maxcommits }}" /></td>
     </tr>
+    <tr>
+      <td>Synchronisation interface</td>
+      <td>
+        {% if interfaces %}
+        <select name="synciface">
+          {% for iface in interfaces %}
+          <option value="{{ iface.id }}">{{ iface.iname }}</option>
+          {% endfor %}
+        </select>
+        {% else %}
+        Create an interface first. (See below)
+        {% endif %}
+      </td>
+    </tr>
   </table>
   <input type="hidden" name="action" value="save_all" />
   <input type="submit" name="submit" value="Save settings" />
   </form>
+  <h2>Interfaces</h2>
+  {% if interfaces %}
+  <p>Available interfaces:
+  <ul>
+  {% for iface in interfaces %}
+    <li><a href="#" class="idel" id="{{ iface.id }}">X</a> {{ iface.iname }}</li>
+  {% endfor %}
+  </ul></p>
+  {% else %}
+  <p>No interfaces defined yet! You need to do that before you can proceed.</p>
+  {% endif %}
+
+  <p>Add interface: <form id="addiface">
+    <input type="text" name="iface" placeholder="ethX" />
+    <input type="hidden" name="action" value="add_iface" />
+    <input type="submit" value="Add" />
+  </form></p>
+
+  <h2>VRRP Addresses</h2>
+  {% if interfaces %}
+  {% if vrrp %}
+  <p>Extra configured VRRP addresses:
+  <ul>
+  {% for addr in vrrp %}
+    <li><a href="#" class="vdel" id="{{ addr.id }}">X</a> {{ addr.address | ip_convert }} on {{ addr.iname }}</li>
+  {% endfor %}
+  </ul>
+  {% endif %}
+  <p>Add VRRP address: <form id="addvrrp">
+    <input type="text" name="ipaddress" placeholder="IP Address" required="required" /> on 
+    <select name="iface">
+      {% for iface in interfaces %}
+      <option value="{{ iface.id }}">{{ iface.iname }}</option>
+      {% endfor %}
+    </select>
+    <input type="hidden" name="action" value="add_vrrp" />
+    <input type="submit" value="Add" />
+  </form></p>
+  {% else %}
+  <p>No interfaces defined yet! You need to do that before you can proceed.</p>
+  {% endif %}
 </div>
