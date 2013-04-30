@@ -30,6 +30,9 @@ DEBUG = True
 USERNAME = 'admin'
 PASSWORD = 'default'
 
+if os.path.isdir(CONFIGREPO) == False:
+        os.mkdir(CONFIGREPO)
+
 if os.path.isfile(SECRET) == False:
     f = open(SECRET, 'w')
     f.write(os.urandom(64))
@@ -67,9 +70,6 @@ def init_db():
             db.cursor().executescript(f.read())
         db.cursor().execute("INSERT INTO users (username, realname, password, email) VALUES (?, ?, ?, ?)", ['admin', 'Tuxis Internet Engineering', hashpw('admin', gensalt()), 'support@tuxis.nl'])
         db.commit()
-
-if os.path.isdir(app.config['CONFIGREPO']) == False:
-    os.mkdir(app.config['CONFIGREPO'])
 
 if os.path.isfile(app.config['DATABASE']) == False:
     init_db()
