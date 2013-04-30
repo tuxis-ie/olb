@@ -384,8 +384,7 @@ def get_settings():
     ret = {}
     q = g.db.execute("SELECT * FROM settings")
     for r in q.fetchall():
-        if r['skey'] in requiredsettings:
-            ret[r['skey']] = r['sval']
+        ret[r['skey']] = r['sval']
 
     ret['hostname'] = getfqdn()
     try:

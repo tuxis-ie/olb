@@ -18,7 +18,7 @@ create table settings (
     id integer primary key autoincrement,
     skey string not null,
     sval string not null,
-    unique (skey, sval)
+    unique (skey)
 );
 
 create table interfaces (
