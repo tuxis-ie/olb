@@ -184,6 +184,25 @@ def do_commit(tag, msg):
     except Exception, e:
         raise pException("While cleaning up commits: %s" % (e))
 
+@adminonly
+def recv_commit(upl, tag, msg):
+    try:
+        cdir = os.path.join(app.config['CONFIGREPO'], tag)
+        os.mkdir(cdir)
+        l = file(os.path.join(cdir, 'message'), 'w')
+        l.write(msg)
+        l.close()
+        l = file(os.path.join(cdir, 'olb.db'), 'w')
+        l.write(upl)
+        l.close()
+    except Exception, e:
+        raise pException(e)
+
+    try:
+        cleanup_commits()
+    except Exception, e:
+        raise pException("While cleaning up commits: %s" % (e))
+
 def remove_commit(tag):
     cdir = os.path.join(app.config['CONFIGREPO'], tag)
     try:
@@ -266,7 +285,7 @@ def do_config_export(tag):
 
     settings = get_settings()
     settings['naddrs'] = settings['naddr'].split(',')
-    c = file(os.path.join('/tmp', 'keepalived.conf'), 'w')
+    c = file(os.path.join(cdir, 'keepalived.conf'), 'w')
     c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vrrps=vrrps))
     c.close()
 
@@ -822,6 +841,16 @@ def commit():
     
         now = datetime.now()
         tag = now.strftime("%Y%m%d%H%M%S")
+        
+        try:
+            upl = checkinput('commitfile', 'any')
+            tag = checkinput('tag', 'any')
+            recv_commit(upl, tag, cmsg)
+            do_config_export(tag)
+            return jsonify(message="Processed incoming commit on %s" % gethostname())
+        except Exception e:
+            return jsonify(error="Could not process incoming commit on %s" % gethostname() )
+
         try:
             do_commit(tag, cmsg)
             do_config_export(tag)
