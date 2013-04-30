@@ -1,11 +1,12 @@
 # all the imports
 from __future__ import with_statement
 from contextlib import closing
+from functools import wraps
 import sqlite3
 import uuid
 import json
 from datetime import datetime
-from socket import gethostname
+from socket import getfqdn
 import re
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, jsonify
@@ -13,6 +14,7 @@ import os
 from bcrypt import hashpw, gensalt
 import ipaddr
 import shutil
+import pycurl
 
 from werkzeug.contrib.securecookie import SecureCookie
 
@@ -92,6 +94,14 @@ def inject_random():
 def check_if_admin():
     return session['username'] == 'admin'
 
+def needlogin(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return wrapper
+
 class pException(Exception):
     def __init__(self, mismatch):
         Exception.__init__(self, mismatch)
@@ -168,6 +178,18 @@ def checkinput(f, t=None):
 
 @adminonly
 def do_commit(tag, msg):
+    settings = get_settings()
+    try:
+        if settings['peer1'] != None and settings['peer2'] != None:
+            if settings['peer1'] == getfqdn():
+                commitpeer = settings['peer2']
+            elif settings['peer2'] == getfqdn():
+                commitpeer = settings['peer1']
+            else:
+                commitpeer = False
+    except:
+        pass
+
     try:
         cdir = os.path.join(app.config['CONFIGREPO'], tag)
         os.mkdir(cdir)
@@ -179,22 +201,53 @@ def do_commit(tag, msg):
     except Exception, e:
         raise pException(e)
 
+    if commitpeer != False:
+        try:
+            send_commit(commitpeer, tag, msg)
+        except Exception:
+            raise pException("Committed locally, but an error occured pushing it to remote")
+
     try:
         cleanup_commits()
     except Exception, e:
         raise pException("While cleaning up commits: %s" % (e))
 
+def send_commit(commitpeer, tag, msg):
+    c = pycurl.Curl()
+    c.setopt(pycurl.COOKIEJAR, "/tmp/.olb.cookie");
+
+    cdir = os.path.join(app.config['CONFIGREPO'], tag)
+
+    fvalues = [
+        ("cmsg", msg),
+        ("sender", getfqdn()),
+        ("tag", tag),
+        ("commitfile", (pycurl.FORM_FILE, os.path.join(cdir, 'olb.db')))
+    ]
+
+    lvalues = [
+        ("username", "admin"),
+        ("password", "admin")
+    ]
+
+    c.setopt(c.URL, "http://%s:5000/login" % ( commitpeer ))
+    c.setopt(c.HTTPPOST, lvalues)
+    c.perform()
+    c.setopt(c.URL, "http://%s:5000/commit" % ( commitpeer ))
+    c.setopt(c.HTTPPOST, fvalues)
+    c.perform()
+    c.close()
+
 @adminonly
-def recv_commit(upl, tag, msg):
+def recv_commit(tag, msg):
     try:
         cdir = os.path.join(app.config['CONFIGREPO'], tag)
         os.mkdir(cdir)
         l = file(os.path.join(cdir, 'message'), 'w')
         l.write(msg)
         l.close()
-        l = file(os.path.join(cdir, 'olb.db'), 'w')
-        l.write(upl)
-        l.close()
+        dbfile = request.files['commitfile']
+        dbfile.save(os.path.join(cdir, 'olb.db'))
     except Exception, e:
         raise pException(e)
 
@@ -334,7 +387,12 @@ def get_settings():
         if r['skey'] in requiredsettings:
             ret[r['skey']] = r['sval']
 
-    ret['hostname'] = gethostname()
+    ret['hostname'] = getfqdn()
+    try:
+        ret['peer1']
+    except:
+        ret['peer1'] = ret['hostname']
+
     try:
         ret['syncifacename'] = get_iface(ret['synciface'])['iname']
     except:
@@ -684,6 +742,7 @@ def login():
     return render_template('login.html', error=error)
 
 @app.route('/users', methods=['GET', 'POST'])
+@needlogin
 @adminonly
 def users():
     error = None
@@ -718,6 +777,7 @@ def users():
     return render_template('users.html', users=users)
 
 @app.route('/nodes', methods=['GET', 'POST'])
+@needlogin
 def nodes():
     error = None
     if request.method == 'POST':
@@ -743,6 +803,7 @@ def nodes():
     return render_template('nodes.html', nodes=nodes)
 
 @app.route('/pools', methods=['GET', 'POST'])
+@needlogin
 def pools():
     error = None
     if request.method == 'POST':
@@ -801,6 +862,7 @@ def pools():
     return render_template('pools.html', pools=tpools, nodes=nodes, pooltypes=pooltypes)
 
 @app.route('/vips', methods=['GET', 'POST'])
+@needlogin
 def vips():
     error = None
     if request.method == 'POST':
@@ -828,12 +890,14 @@ def vips():
     return render_template('vips.html', pools=pools, vips=vips, interfaces=interfaces)
 
 @app.route('/commit', methods=['GET', 'POST'])
+@needlogin
 def commit():
     if req_settings_set() == False:
         return render_template('commit.html', need_settings=True)
 
     if request.method == 'POST':
         cmsg = ""
+        handle_upload = False
         try:
             cmsg = checkinput('cmsg', 'any')
         except:
@@ -843,14 +907,22 @@ def commit():
         tag = now.strftime("%Y%m%d%H%M%S")
         
         try:
-            upl = checkinput('commitfile', 'any')
+            sender = checkinput('sender', 'any')
+            cmsg = checkinput('cmsg', 'any')
             tag = checkinput('tag', 'any')
-            recv_commit(upl, tag, cmsg)
-            do_config_export(tag)
-            return jsonify(message="Processed incoming commit on %s" % gethostname())
-        except Exception e:
-            return jsonify(error="Could not process incoming commit on %s" % gethostname() )
+            handle_upload = True
+        except:
+            pass
 
+        if handle_upload == True:
+            try:
+                cmsg = "%s (received from %s)" % (cmsg, sender)
+                recv_commit(tag, cmsg)
+                do_config_export(tag)
+                return jsonify(message="Processed incoming commit on %s" % getfqdn())
+            except Exception, e:
+                return jsonify(error="Could not process incoming commit on %s" % getfqdn() )
+        
         try:
             do_commit(tag, cmsg)
             do_config_export(tag)
@@ -863,6 +935,7 @@ def commit():
     return render_template('commit.html', history=commits)
 
 @app.route('/settings', methods=['GET', 'POST'])
+@needlogin
 def settings():
     if request.method == 'POST':
         try:
@@ -875,6 +948,12 @@ def settings():
                 for key in requiredsettings:
                     v = checkinput(key)
                     save_setting(key, v)
+                for key in [ 'peer1', 'peer2' ]:
+                    try:
+                        v = checkinput(key, 'hostname')
+                        save_setting(key, v)
+                    except:
+                        pass
                 return jsonify(message="All settings saved")
             except Exception, e:
                 return jsonify(error="Could not save settings: %s" % (e))
