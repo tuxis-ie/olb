@@ -717,7 +717,7 @@ def show_main():
     return render_template('layout.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-def login(redirect=True):
+def login(doredirect=True):
     error = None
     if request.method == 'POST':
         try:
@@ -734,12 +734,12 @@ def login(redirect=True):
             session['username']  = u
             session['oid'] = get_user(name=u)['id']
             flash('You were logged in')
-            if redirect == True:
+            if doredirect == True:
                 return redirect(url_for('show_main'))
 
             return True
 
-        if redirect == False:
+        if doredirect == False:
             return False
 
         error = 'Invalid username or password'
@@ -921,7 +921,7 @@ def commit():
             pass
 
         if handle_upload == True:
-            if login(redirect=False) == False:
+            if login(doredirect=False) == False:
                 return jsonify(error="Could not process incoming commit on %s" % getfqdn() )
 
             try:
