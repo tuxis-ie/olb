@@ -203,10 +203,7 @@ def do_commit(tag, msg):
         raise pException(e)
 
     if commitpeer != False:
-        try:
-            send_commit(commitpeer, tag, msg)
-        except Exception:
-            raise pException("Committed locally, but an error occured pushing it to remote")
+        send_commit(commitpeer, tag, msg)
 
     try:
         cleanup_commits()
@@ -222,16 +219,17 @@ def send_commit(commitpeer, tag, msg):
     password = checkinput("peerpw", 'any')
 
     fvalues = [
-        ("cmsg", msg),
-        ("sender", getfqdn()),
-        ("tag", tag),
-        ("commitfile", (pycurl.FORM_FILE, os.path.join(cdir, 'olb.db')))
-        ("username", "admin"),
-        ("password", password)
+        ("cmsg", str(msg)),
+        ("sender", str(getfqdn())),
+        ("tag", str(tag)),
+        ("commitfile", (c.FORM_FILE, os.path.join(cdir, 'olb.db'))),
+        ("username", str("admin")),
+        ("password", str(password))
     ]
 
+    url = "http://%s/commit" % ( commitpeer )
     c.setopt(c.PORT, 5000)
-    c.setopt(c.URL, str("http://%s/commit" % ( commitpeer )))
+    c.setopt(c.URL, str(url))
     c.setopt(c.HTTPPOST, fvalues)
     c.perform()
     c.close()
@@ -894,7 +892,6 @@ def vips():
     return render_template('vips.html', pools=pools, vips=vips, interfaces=interfaces)
 
 @app.route('/commit', methods=['GET', 'POST'])
-@needlogin
 def commit():
     if req_settings_set() == False:
         return render_template('commit.html', need_settings=True)
@@ -940,8 +937,9 @@ def commit():
             return jsonify(error="Could not commit: %s" % (e))
 
     commits = get_commits()
+    settings = get_settings()
 
-    return render_template('commit.html', history=commits)
+    return render_template('commit.html', history=commits, settings=settings)
 
 @app.route('/settings', methods=['GET', 'POST'])
 @needlogin
