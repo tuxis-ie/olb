@@ -243,7 +243,8 @@ def recv_commit(tag, msg):
         l.close()
         dbfile = request.files['commitfile']
         dbfile.save(os.path.join(cdir, 'olb.db'))
-        dbfile.save(os.path.join(app.config['CONFIGREPO'], 'olb.db'))
+        shutil.copy2(os.path.join(cdir, 'olb.db'), app.config['DATABASE'])
+        os.chmod(os.path.join(cdir, 'olb.db'), 0400)
     except Exception, e:
         raise pException(e)
 
