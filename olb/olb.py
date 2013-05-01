@@ -234,7 +234,6 @@ def send_commit(commitpeer, tag, msg):
     c.perform()
     c.close()
 
-@adminonly
 def recv_commit(tag, msg):
     try:
         cdir = os.path.join(app.config['CONFIGREPO'], tag)
@@ -893,9 +892,6 @@ def vips():
 
 @app.route('/commit', methods=['GET', 'POST'])
 def commit():
-    if req_settings_set() == False:
-        return render_template('commit.html', need_settings=True)
-
     if request.method == 'POST':
         cmsg = ""
         handle_upload = False
@@ -935,6 +931,9 @@ def commit():
             return jsonify(message="Commited %s as %s" % (cmsg, tag))
         except Exception, e:
             return jsonify(error="Could not commit: %s" % (e))
+
+    if req_settings_set() == False:
+        return render_template('commit.html', need_settings=True)
 
     commits = get_commits()
     settings = get_settings()
