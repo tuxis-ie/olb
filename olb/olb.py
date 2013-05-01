@@ -263,6 +263,7 @@ def remove_commit(tag):
 
     try:
         os.remove(os.path.join(cdir, 'message'))
+        os.remove(os.path.join(cdir, 'keepalived.conf'))
     except:
         pass
 
