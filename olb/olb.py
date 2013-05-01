@@ -150,6 +150,7 @@ def checkinput(f, t=None):
     validators['naddr'] = validators['moreemail']
     validators['maxcommits'] = validators['number']
     validators['synciface'] = validators['number']
+    validators['password'] = validators['any']
 
     try:
         if validators[t]['error'] != "":
@@ -214,26 +215,23 @@ def do_commit(tag, msg):
 
 def send_commit(commitpeer, tag, msg):
     c = pycurl.Curl()
-    c.setopt(pycurl.COOKIEJAR, "/tmp/.olb.cookie");
+    c.setopt(c.COOKIEJAR, "/tmp/.olb.cookie");
 
     cdir = os.path.join(app.config['CONFIGREPO'], tag)
+
+    password = checkinput("peerpw", 'any')
 
     fvalues = [
         ("cmsg", msg),
         ("sender", getfqdn()),
         ("tag", tag),
         ("commitfile", (pycurl.FORM_FILE, os.path.join(cdir, 'olb.db')))
-    ]
-
-    lvalues = [
         ("username", "admin"),
-        ("password", "admin")
+        ("password", password)
     ]
 
-    c.setopt(c.URL, "http://%s:5000/login" % ( commitpeer ))
-    c.setopt(c.HTTPPOST, lvalues)
-    c.perform()
-    c.setopt(c.URL, "http://%s:5000/commit" % ( commitpeer ))
+    c.setopt(c.PORT, 5000)
+    c.setopt(c.URL, str("http://%s/commit" % ( commitpeer )))
     c.setopt(c.HTTPPOST, fvalues)
     c.perform()
     c.close()
@@ -719,7 +717,7 @@ def show_main():
     return render_template('layout.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-def login():
+def login(redirect=True):
     error = None
     if request.method == 'POST':
         try:
@@ -736,7 +734,13 @@ def login():
             session['username']  = u
             session['oid'] = get_user(name=u)['id']
             flash('You were logged in')
-            return redirect(url_for('show_main'))
+            if redirect == True:
+                return redirect(url_for('show_main'))
+
+            return True
+
+        if redirect == False:
+            return False
 
         error = 'Invalid username or password'
     return render_template('login.html', error=error)
@@ -907,6 +911,8 @@ def commit():
         tag = now.strftime("%Y%m%d%H%M%S")
         
         try:
+            user = checkinput('username')
+            password = checkinput('password')
             sender = checkinput('sender', 'any')
             cmsg = checkinput('cmsg', 'any')
             tag = checkinput('tag', 'any')
@@ -915,6 +921,9 @@ def commit():
             pass
 
         if handle_upload == True:
+            if login(redirect=False) == False:
+                return jsonify(error="Could not process incoming commit on %s" % getfqdn() )
+
             try:
                 cmsg = "%s (received from %s)" % (cmsg, sender)
                 recv_commit(tag, cmsg)

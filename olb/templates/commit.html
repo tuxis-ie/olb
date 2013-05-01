@@ -32,8 +32,12 @@
 {% else %}
 <div class="commit">
   <h2>Commit current config</h2>
+  <p>If you have two peers configured, you need to enter the password for your peers admin-user below so we can sync.</p>
   <form method="POST" action="/commit" id="commit">
-    <input type="text" name="cmsg" placeholder="Commit message"/>
+    <textarea name="cmsg" placeholder="Commit message"/>
+    {% if settings.peer1 and settings.peer2 %}
+    <input type="password" name="peerpw" placeholder="Peer password"/>
+    {% endif %}
     <input type="submit" name="submit" value="Commit!" />
   </form>
 </div>
