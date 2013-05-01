@@ -338,6 +338,9 @@ def do_config_export(tag):
     c = file(os.path.join(cdir, 'keepalived.conf'), 'w')
     c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vrrps=vrrps))
     c.close()
+    d = file(os.path.join(app.config['CONFIGREPO'], 'keepalived.conf'), 'w')
+    d.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vrrps=vrrps))
+    d.close()
 
 @adminonly
 def get_commits():
