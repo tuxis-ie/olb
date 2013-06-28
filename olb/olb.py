@@ -311,10 +311,15 @@ def do_config_export(tag):
         ORDER BY ip')
     for v in q.fetchall():
         vip = {}
+        vrrp = {}
         vip['ip'] = v['ip']
+        vip['interface'] = v['iname']
+        vrrp['ip'] = v['ip']
+        vrrp['interface'] = str(v['iname'])
+        if vrrp['ip'].startswith("6-"):
+            vrrp['interface'] = str(v['iname'])+" preferred_lft 0"
         vip['port'] = v['port']
         vip['typeconf'] = v['typeconf']
-        vip['interface'] = v['iname']
         vip['nodes'] = []
         pool = {}
         pq = edb.execute('SELECT n.ip, n.port FROM nodes n, poolnodes pn WHERE n.id = pn.node AND pn.pool = ?', [v['pid']])
@@ -324,7 +329,8 @@ def do_config_export(tag):
             node['port'] = n['port']
             vip['nodes'].append(node)
         vips.append(vip)
-        vrrps.append(vip)
+        if vrrp not in vrrps:
+            vrrps.append(vrrp)
 
     q = edb.execute('SELECT v.*, i.iname FROM vrrp v, interfaces i WHERE i.id = v.interface \
         ORDER BY address')
