@@ -674,7 +674,7 @@ def del_iface():
         raise pException(e)
 
 def get_ifaces():
-    q = g.db.execute('SELECT * FROM interfaces')
+    q = g.db.execute('SELECT * FROM interfaces ORDER BY iname')
 
     return q.fetchall()
 
