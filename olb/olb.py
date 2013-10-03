@@ -315,7 +315,7 @@ def do_config_export(tag):
         vip['ip'] = v['ip']
         vip['interface'] = v['iname']
         vrrp['ip'] = v['ip']
-        vrrp['interface'] = 'lo'
+        vrrp['interface'] = str(v['iname'])
         vip['port'] = v['port']
         vip['typeconf'] = v['typeconf']
         vip['nodes'] = []
