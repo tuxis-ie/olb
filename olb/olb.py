@@ -305,6 +305,7 @@ def do_config_export(tag):
 
     vips = []
     vrrps = []
+    vvrrps = []
     q = edb.execute('SELECT v.*, p.id as pid, pt.typeconf, i.iname \
         FROM vips v, pools p, pooltypes pt, interfaces i \
         WHERE v.pool = p.id AND p.pooltype = pt.id AND i.id = v.interface \
@@ -327,8 +328,8 @@ def do_config_export(tag):
             node['port'] = n['port']
             vip['nodes'].append(node)
         vips.append(vip)
-        if vrrp not in vrrps:
-            vrrps.append(vrrp)
+        if vrrp not in vvrrps:
+            vvrrps.append(vrrp)
 
     q = edb.execute('SELECT v.*, i.iname FROM vrrp v, interfaces i WHERE i.id = v.interface \
         ORDER BY address')
@@ -341,10 +342,10 @@ def do_config_export(tag):
     settings = get_settings()
     settings['naddrs'] = settings['naddr'].split(',')
     c = file(os.path.join(cdir, 'keepalived.conf'), 'w')
-    c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vrrps=vrrps))
+    c.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vvrrps=vvrrps, vrrps=vrrps))
     c.close()
     d = file(os.path.join(app.config['CONFIGREPO'], 'keepalived.conf'), 'w')
-    d.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vrrps=vrrps))
+    d.write(render_template('keepalived/keepalived.conf', settings=settings, vips=vips, vvrrps=vvrrps, vrrps=vrrps))
     d.close()
 
 @adminonly
