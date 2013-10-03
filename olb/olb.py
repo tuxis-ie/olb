@@ -315,9 +315,7 @@ def do_config_export(tag):
         vip['ip'] = v['ip']
         vip['interface'] = v['iname']
         vrrp['ip'] = v['ip']
-        vrrp['interface'] = str(v['iname'])
-        if vrrp['ip'].startswith("6-"):
-            vrrp['interface'] = str(v['iname'])
+        vrrp['interface'] = 'lo'
         vip['port'] = v['port']
         vip['typeconf'] = v['typeconf']
         vip['nodes'] = []
